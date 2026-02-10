@@ -4,27 +4,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CLAO Ventures — DAO Treasury</title>
+    <title>Autonomous Fund — Agent Collective</title>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-color: #0a0a0c;
             --terminal-bg: #121217;
             --accent-color: #E34543;
-            /* Rebrand Color */
             --text-color: #e0e0e0;
             --dim-text: #888;
             --border-color: #2a2a35;
             --success-color: #00ff9d;
             --warning-color: #ffb800;
             --error-color: #ff4d4d;
+            --passed-color: #00b4d8;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             background-color: var(--bg-color);
@@ -34,11 +30,7 @@
             overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
 
         header {
             border-bottom: 2px solid var(--border-color);
@@ -55,18 +47,19 @@
             color: var(--accent-color);
             text-transform: uppercase;
             letter-spacing: 2px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
         }
 
         .status-dot {
             display: inline-block;
             width: 8px;
             height: 8px;
-            background-color: var(--success-color);
+            background-color: var(--dim-text);
             border-radius: 50%;
             margin-right: 8px;
+        }
+
+        .status-dot.connected {
+            background-color: var(--success-color);
             box-shadow: 0 0 10px var(--success-color);
         }
 
@@ -77,9 +70,7 @@
         }
 
         @media (max-width: 900px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
+            .grid { grid-template-columns: 1fr; }
         }
 
         .panel {
@@ -87,7 +78,6 @@
             border: 1px solid var(--border-color);
             padding: 1.5rem;
             border-radius: 4px;
-            position: relative;
             margin-bottom: 2rem;
         }
 
@@ -108,7 +98,7 @@
 
         .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -125,10 +115,7 @@
             text-transform: uppercase;
         }
 
-        .metric-value {
-            font-size: 1.4rem;
-            font-weight: 700;
-        }
+        .metric-value { font-size: 1.4rem; font-weight: 700; }
 
         .proposal-card {
             background: rgba(255, 255, 255, 0.02);
@@ -143,62 +130,89 @@
             border-color: var(--accent-color);
         }
 
-        .proposal-id {
-            color: var(--dim-text);
-            font-size: 0.8rem;
-        }
-
-        .proposal-desc {
-            margin: 0.5rem 0;
-            font-size: 1rem;
-        }
+        .proposal-id { color: var(--dim-text); font-size: 0.8rem; }
+        .proposal-desc { margin: 0.5rem 0; font-size: 0.95rem; }
 
         .proposal-meta {
             display: flex;
             justify-content: space-between;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--dim-text);
+            margin-bottom: 0.25rem;
         }
 
         .vote-bar {
-            height: 4px;
+            height: 6px;
             background: var(--border-color);
-            margin-top: 1rem;
+            margin-top: 0.75rem;
             position: relative;
+            display: flex;
         }
 
-        .vote-progress {
+        .vote-yes {
             height: 100%;
-            background: var(--accent-color);
-            width: 0%;
+            background: var(--success-color);
             transition: width 0.5s;
+        }
+
+        .vote-no {
+            height: 100%;
+            background: var(--error-color);
+            transition: width 0.5s;
+        }
+
+        .vote-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            margin-top: 0.25rem;
+        }
+
+        .vote-labels .yes { color: var(--success-color); }
+        .vote-labels .no { color: var(--error-color); }
+
+        .time-remaining {
+            font-size: 0.7rem;
+            color: var(--warning-color);
+            margin-top: 0.5rem;
         }
 
         .badge {
             padding: 2px 8px;
             border-radius: 2px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             text-transform: uppercase;
+            font-weight: 700;
         }
 
-        .badge-open {
-            border: 1px solid var(--accent-color);
-            color: var(--accent-color);
+        .badge-open { border: 1px solid var(--accent-color); color: var(--accent-color); }
+        .badge-passed { border: 1px solid var(--passed-color); color: var(--passed-color); }
+        .badge-executable { border: 1px solid var(--warning-color); color: var(--warning-color); }
+        .badge-executed { border: 1px solid var(--success-color); color: var(--success-color); }
+        .badge-failed { border: 1px solid var(--error-color); color: var(--error-color); }
+        .badge-cancelled { border: 1px solid var(--dim-text); color: var(--dim-text); }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
         }
 
-        .badge-executed {
-            border: 1px solid var(--success-color);
-            color: var(--success-color);
+        .btn-group button {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.7rem;
+            width: auto;
+            flex: 1;
         }
 
-        .badge-failed {
-            border: 1px solid var(--error-color);
-            color: var(--error-color);
-        }
+        .btn-yes { background: var(--success-color); color: #000; }
+        .btn-yes:hover { background: #00cc7a; }
+        .btn-no { background: var(--error-color); color: #000; }
+        .btn-no:hover { background: #cc3333; }
+        .btn-action { background: transparent; border: 1px solid var(--dim-text); color: var(--dim-text); }
+        .btn-action:hover { border-color: var(--text-color); color: var(--text-color); }
 
-        .form-group {
-            margin-bottom: 1rem;
-        }
+        .form-group { margin-bottom: 1rem; }
 
         label {
             display: block;
@@ -207,21 +221,18 @@
             margin-bottom: 0.5rem;
         }
 
-        input,
-        textarea,
-        select {
+        input, textarea, select {
             width: 100%;
             background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border-color);
             color: white;
             padding: 0.8rem;
             font-family: inherit;
+            font-size: 0.85rem;
             outline: none;
         }
 
-        input:focus {
-            border-color: var(--accent-color);
-        }
+        input:focus, textarea:focus { border-color: var(--accent-color); }
 
         button {
             background: var(--accent-color);
@@ -234,15 +245,11 @@
             transition: background 0.2s, transform 0.1s;
             text-transform: uppercase;
             width: 100%;
+            font-size: 0.85rem;
         }
 
-        button:hover {
-            background: #00dce6;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
+        button:hover { background: #c93331; }
+        button:active { transform: scale(0.98); }
 
         .secondary-btn {
             background: transparent;
@@ -251,9 +258,7 @@
             margin-top: 0.5rem;
         }
 
-        .secondary-btn:hover {
-            background: rgba(0, 242, 255, 0.1);
-        }
+        .secondary-btn:hover { background: rgba(227, 69, 67, 0.1); }
 
         .contract-input {
             display: flex;
@@ -261,96 +266,80 @@
             margin-bottom: 2rem;
         }
 
-        .contract-input input {
-            flex: 1;
-        }
-
-        .contract-input button {
-            width: auto;
-        }
+        .contract-input input { flex: 1; }
+        .contract-input button { width: auto; }
 
         #log-panel {
-            font-size: 0.8rem;
-            max-height: 300px;
+            font-size: 0.75rem;
+            max-height: 250px;
             overflow-y: auto;
             color: var(--dim-text);
         }
 
         .log-entry {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
             border-left: 2px solid var(--border-color);
             padding-left: 0.5rem;
         }
 
-        .log-time {
-            color: var(--accent-color);
+        .log-time { color: var(--accent-color); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--dim-text); }
+
+        .guardrails {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.7rem;
+            color: var(--dim-text);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-color);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--dim-text);
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
+        .guardrails span { display: flex; justify-content: space-between; }
+        .guardrails .value { color: var(--text-color); }
     </style>
 </head>
 
 <body>
-
     <div class="container">
         <header>
             <div class="logo">Autonomous Fund</div>
             <div id="connection-status">
-                <span class="status-dot"></span>
-                <span id="network-info">Claws Mainnet</span>
+                <span class="status-dot" id="status-dot"></span>
+                <span id="network-info">Disconnected</span>
             </div>
         </header>
 
         <div class="contract-input">
-            <input type="text" id="sc-address" placeholder="Enter Contract Address (claw1...)"
-                value="claw1qqqqqqqqqqqqqpgqy4x50k4sxaqj0dlmgmrj93krldw54expkgcqnzkmx3">
-            <button onclick="config.connect()">Connect</button>
+            <input type="text" id="sc-address" placeholder="Enter Fund Contract Address (claw1...)">
+            <button onclick="fund.connect()">Connect</button>
         </div>
 
         <div class="metrics-grid">
             <div class="metric-card">
                 <div class="metric-label">Total AUM</div>
-                <div class="metric-value" id="val-aum">0.00 CLAW</div>
-            </div>
-            <div class="metric-card">
-                <div class="metric-label">Total Shares</div>
-                <div class="metric-value" id="val-shares">0.00 AF</div>
+                <div class="metric-value" id="val-aum">—</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">Share Price</div>
-                <div class="metric-value" id="val-price">1.00 CLAW</div>
+                <div class="metric-value" id="val-price">—</div>
             </div>
             <div class="metric-card">
                 <div class="metric-label">Members</div>
-                <div class="metric-value" id="val-members">0</div>
+                <div class="metric-value" id="val-members">—</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Proposals</div>
+                <div class="metric-value" id="val-proposals">—</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Min Uptime</div>
+                <div class="metric-value" id="val-uptime">—</div>
             </div>
         </div>
 
@@ -359,22 +348,21 @@
                 <div class="panel">
                     <div class="panel-header">
                         <span>Governance</span>
-                        <span id="proposal-count">0 proposals</span>
+                        <span id="active-count">—</span>
                     </div>
                     <h2>Active Proposals</h2>
                     <div id="proposal-list">
-                        <!-- Proposals will be injected here -->
                         <div style="text-align: center; color: var(--dim-text); padding: 2rem;">
-                            Waiting for connection...
+                            Connect to a fund contract to view proposals.
                         </div>
                     </div>
                 </div>
 
                 <div class="panel">
-                    <div class="panel-header">Console Logs</div>
+                    <div class="panel-header">Console</div>
                     <div id="log-panel">
                         <div class="log-entry">
-                            <span class="log-time">[18:00:00]</span> SYSTEM: Awaiting agent initialization...
+                            <span class="log-time">[--:--:--]</span> Awaiting connection...
                         </div>
                     </div>
                 </div>
@@ -382,17 +370,15 @@
 
             <aside>
                 <div class="panel">
-                    <h2>Member Actions</h2>
-                    <div class="form-group">
-                        <label>Amount ($CLAW)</label>
-                        <input type="number" id="tx-amount" placeholder="0.00">
+                    <h2>Fund Info</h2>
+                    <div class="guardrails" id="guardrails">
+                        <span>Proposal cap <span class="value">15% AUM</span></span>
+                        <span>Epoch limit <span class="value">25% AUM</span></span>
+                        <span>Vote window <span class="value">24h</span></span>
+                        <span>Time-lock <span class="value">24h</span></span>
+                        <span>Min deposit <span class="value">25K CLAW</span></span>
+                        <span>Quorum <span class="value">51%</span></span>
                     </div>
-                    <button onclick="vault.deposit()">Deposit Capital</button>
-                    <div style="margin-top: 1rem;">
-                        <label>Shares to Burn</label>
-                        <input type="number" id="tx-shares" placeholder="0.00">
-                    </div>
-                    <button onclick="vault.withdraw()" class="secondary-btn">Withdraw Profit</button>
                 </div>
 
                 <div class="panel">
@@ -400,48 +386,99 @@
                     <div class="form-group">
                         <label>Description</label>
                         <textarea id="prop-desc" rows="3"
-                            placeholder="e.g. Invest in OpenDex liquidity pool #5"></textarea>
+                            placeholder="e.g. Fund Agent X for DEX liquidity provision"></textarea>
                     </div>
                     <div class="form-group">
                         <label>Recipient Address</label>
                         <input type="text" id="prop-recv" placeholder="claw1...">
                     </div>
                     <div class="form-group">
-                        <label>Amount ($CLAW)</label>
-                        <input type="number" id="prop-amount" placeholder="0.00">
+                        <label>Amount (CLAW)</label>
+                        <input type="number" id="prop-amount" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Bulletin Board Post ID</label>
+                        <input type="number" id="prop-post-id" placeholder="e.g. 42">
                     </div>
                     <button onclick="governance.submit()">Submit Proposal</button>
+                </div>
+
+                <div class="panel">
+                    <h2>Member Actions</h2>
+                    <div class="form-group">
+                        <label>Deposit Amount (CLAW)</label>
+                        <input type="number" id="tx-amount" placeholder="25000" step="0.01">
+                    </div>
+                    <button onclick="vault.deposit()">Deposit</button>
+                    <div style="margin-top: 1rem;">
+                        <label>Shares to Withdraw</label>
+                        <input type="number" id="tx-shares" placeholder="0">
+                    </div>
+                    <button onclick="vault.withdraw()" class="secondary-btn">Withdraw</button>
                 </div>
             </aside>
         </div>
     </div>
 
-    <div id="loading" class="loading-overlay">
-        <div>DECODING CHAIN DATA...</div>
-    </div>
-
     <script>
         const PROXY_URL = 'https://api.claws.network';
         let contractAddr = '';
+        let refreshInterval = null;
 
-        // --- Utilities ---
+        // ── Utilities ──
+
         const log = (msg) => {
             const panel = document.getElementById('log-panel');
             const time = new Date().toLocaleTimeString('en-US', { hour12: false });
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            entry.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${escapeHtml(msg)}`;
             panel.prepend(entry);
+            // Keep log manageable
+            while (panel.children.length > 100) panel.removeChild(panel.lastChild);
         };
 
-        const formatClaw = (atto) => (Number(atto) / 1e18).toFixed(2);
+        const escapeHtml = (str) => {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        };
 
-        // --- Binary Decoding (from CLAUDE.md patterns) ---
+        const formatClaw = (atto) => {
+            const val = Number(atto) / 1e18;
+            if (val >= 1000) return val.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' CLAW';
+            if (val >= 1) return val.toFixed(2) + ' CLAW';
+            return val.toFixed(4) + ' CLAW';
+        };
+
+        const formatTimeRemaining = (endTimestamp) => {
+            const now = Date.now() / 1000;
+            const remaining = endTimestamp - now;
+            if (remaining <= 0) return 'Expired';
+            const hours = Math.floor(remaining / 3600);
+            const mins = Math.floor((remaining % 3600) / 60);
+            return `${hours}h ${mins}m remaining`;
+        };
+
+        // ── Binary Decoders ──
+
         function decodeBase64(b64) {
             return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
         }
 
-        function readU64(bytes, offset) {
+        function readTopLevelBigUint(bytes) {
+            let val = 0n;
+            for (let i = 0; i < bytes.length; i++) {
+                val = (val << 8n) | BigInt(bytes[i]);
+            }
+            return val;
+        }
+
+        function readTopLevelU64(bytes) {
+            return Number(readTopLevelBigUint(bytes));
+        }
+
+        function readNestedU64(bytes, offset) {
             let val = 0n;
             for (let i = 0; i < 8; i++) {
                 val = (val << 8n) | BigInt(bytes[offset + i]);
@@ -449,15 +486,14 @@
             return { value: Number(val), next: offset + 8 };
         }
 
-        function readU32(bytes, offset) {
-            return {
-                value: (bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3],
-                next: offset + 4
-            };
+        function readNestedU32(bytes, offset) {
+            const val = ((bytes[offset] << 24) | (bytes[offset+1] << 16) |
+                         (bytes[offset+2] << 8) | bytes[offset+3]) >>> 0;
+            return { value: val, next: offset + 4 };
         }
 
-        function readBigUint(bytes, offset) {
-            const { value: len, next: start } = readU32(bytes, offset);
+        function readNestedBigUint(bytes, offset) {
+            const { value: len, next: start } = readNestedU32(bytes, offset);
             let val = 0n;
             for (let i = 0; i < len; i++) {
                 val = (val << 8n) | BigInt(bytes[start + i]);
@@ -465,20 +501,38 @@
             return { value: val, next: start + len };
         }
 
-        function readManagedBuffer(bytes, offset) {
-            const { value: len, next: start } = readU32(bytes, offset);
+        function readNestedBuffer(bytes, offset) {
+            const { value: len, next: start } = readNestedU32(bytes, offset);
             const text = new TextDecoder().decode(bytes.slice(start, start + len));
             return { value: text, next: start + len };
         }
 
-        function readAddress(bytes, offset) {
+        function readNestedAddress(bytes, offset) {
             const pubkey = bytes.slice(offset, offset + 32);
-            // Simple hex for now as bech32 is heavy
             const hex = Array.from(pubkey).map(b => b.toString(16).padStart(2, '0')).join('');
-            return { value: '0x' + hex, next: offset + 32 };
+            return { value: 'claw1...' + hex.substring(0, 8), next: offset + 32 };
         }
 
-        // --- API Interactions ---
+        const STATUS_NAMES = ['Open', 'Passed', 'Executable', 'Executed', 'Failed', 'Cancelled'];
+
+        function decodeProposal(bytes, offset = 0) {
+            const p = {};
+            const id = readNestedU64(bytes, offset); offset = id.next; p.id = id.value;
+            const proposer = readNestedAddress(bytes, offset); offset = proposer.next; p.proposer = proposer.value;
+            const desc = readNestedBuffer(bytes, offset); offset = desc.next; p.description = desc.value;
+            const recv = readNestedAddress(bytes, offset); offset = recv.next; p.receiver = recv.value;
+            const amount = readNestedBigUint(bytes, offset); offset = amount.next; p.amount = amount.value;
+            p.status = STATUS_NAMES[bytes[offset]] || 'Unknown'; p.statusIdx = bytes[offset]; offset++;
+            const yes = readNestedBigUint(bytes, offset); offset = yes.next; p.yesVotes = yes.value;
+            const no = readNestedBigUint(bytes, offset); offset = no.next; p.noVotes = no.value;
+            const created = readNestedU64(bytes, offset); offset = created.next; p.createdAt = created.value;
+            const passed = readNestedU64(bytes, offset); offset = passed.next; p.passedAt = passed.value;
+            const post = readNestedU64(bytes, offset); offset = post.next; p.bulletinPostId = post.value;
+            return { proposal: p, next: offset };
+        }
+
+        // ── API ──
+
         const api = {
             async query(func, args = []) {
                 try {
@@ -493,130 +547,172 @@
                     }
                     return json.data.data.returnData;
                 } catch (err) {
-                    log(`ERROR: ${err.message}`);
+                    log(`ERROR [${func}]: ${err.message}`);
                     return null;
                 }
             }
         };
 
-        // --- Modules ---
-        const config = {
+        // ── Fund Controller ──
+
+        const fund = {
             async connect() {
-                contractAddr = document.getElementById('sc-address').value;
+                contractAddr = document.getElementById('sc-address').value.trim();
                 if (!contractAddr.startsWith('claw1')) {
-                    log('INVALID ADDRESS: Must start with claw1');
+                    log('INVALID: Address must start with claw1');
                     return;
                 }
-                log(`CONNECTED to fund at ${contractAddr.substring(0, 12)}...`);
-                this.refresh();
-                setInterval(() => this.refresh(), 15000); // Poll every 15s
+                log(`Connecting to ${contractAddr.substring(0, 16)}...`);
+                document.getElementById('status-dot').classList.add('connected');
+                document.getElementById('network-info').textContent = 'Claws Mainnet';
+
+                // Clear any previous interval
+                if (refreshInterval) clearInterval(refreshInterval);
+
+                await this.refresh();
+                refreshInterval = setInterval(() => this.refresh(), 20000);
             },
 
             async refresh() {
-                document.getElementById('loading').style.display = 'flex';
-
-                // 1. Stats
+                // Stats
                 const stats = await api.query('getFundStats');
-                if (stats) {
-                    const aum = decodeBase64(stats[0]);
-                    const shares = decodeBase64(stats[1]);
-                    const members = decodeBase64(stats[2]);
-
-                    // Assuming small enough for direct decode for members
-                    const memberCount = members.length > 0 ? members[members.length - 1] : 0;
-
-                    // Simple biguint decode (needs robust implementation)
-                    document.getElementById('val-aum').innerText = `${formatClaw(readBigUint(aum, 0).value)} CLAW`;
-                    document.getElementById('val-shares').innerText = `${formatClaw(readBigUint(shares, 0).value)} AF`;
-                    document.getElementById('val-members').innerText = memberCount;
+                if (stats && stats.length >= 5) {
+                    const aum = readTopLevelBigUint(decodeBase64(stats[0]));
+                    document.getElementById('val-aum').textContent = formatClaw(aum);
+                    document.getElementById('val-members').textContent = readTopLevelU64(decodeBase64(stats[2]));
+                    document.getElementById('val-proposals').textContent = readTopLevelU64(decodeBase64(stats[3]));
+                    document.getElementById('val-uptime').textContent = readTopLevelU64(decodeBase64(stats[4]));
                 }
 
-                // 2. Share Price
+                // Share price
                 const price = await api.query('getSharePrice');
-                if (price) {
-                    const p = readBigUint(decodeBase64(price[0]), 0).value;
-                    document.getElementById('val-price').innerText = `${(Number(p) / 1e18).toFixed(4)} CLAW`;
+                if (price && price.length > 0) {
+                    const p = readTopLevelBigUint(decodeBase64(price[0]));
+                    document.getElementById('val-price').textContent = (Number(p) / 1e18).toFixed(4) + ' CLAW';
                 }
 
-                // 3. Proposals
-                const props = await api.query('getProposals');
-                if (props) {
-                    this.renderProposals(props);
-                }
-
-                document.getElementById('loading').style.display = 'none';
+                // Active proposals
+                const active = await api.query('getActiveProposals');
+                this.renderProposals(active);
             },
 
             renderProposals(encodedProps) {
                 const list = document.getElementById('proposal-list');
                 list.innerHTML = '';
-                document.getElementById('proposal-count').innerText = `${encodedProps.length} proposals`;
 
-                encodedProps.forEach(p => {
-                    const data = decodeBase64(p);
-                    // Schema: id (u64), proposer (addr), desc (buf), recv (addr), amount (biguint), status (enum), votes (biguint), time (u64)
-                    let offset = 0;
-                    const id = readU64(data, offset); offset = id.next;
-                    const proposer = readAddress(data, offset); offset = proposer.next;
-                    const desc = readManagedBuffer(data, offset); offset = desc.next;
-                    const recv = readAddress(data, offset); offset = recv.next;
-                    const amount = readBigUint(data, offset); offset = amount.next;
-                    const statusIdx = data[offset++];
-                    const votes = readBigUint(data, offset); offset = votes.next;
-                    const time = readU64(data, offset);
+                if (!encodedProps || encodedProps.length === 0) {
+                    list.innerHTML = '<div style="text-align:center;color:var(--dim-text);padding:2rem;">No active proposals.</div>';
+                    document.getElementById('active-count').textContent = '0 active';
+                    return;
+                }
 
-                    const statusMap = ['Open', 'Executed', 'Failed'];
-                    const status = statusMap[statusIdx] || 'Unknown';
+                document.getElementById('active-count').textContent = `${encodedProps.length} active`;
+
+                encodedProps.forEach(encoded => {
+                    const data = decodeBase64(encoded);
+                    const { proposal: p } = decodeProposal(data);
+
+                    const totalVotes = p.yesVotes + p.noVotes;
+                    const yesPct = totalVotes > 0n ? Number((p.yesVotes * 100n) / totalVotes) : 0;
+                    const noPct = totalVotes > 0n ? Number((p.noVotes * 100n) / totalVotes) : 0;
+
+                    const badgeClass = `badge-${p.status.toLowerCase()}`;
+
+                    // Time remaining calculation
+                    let timeInfo = '';
+                    const VOTING_PERIOD = 86400;
+                    const TIMELOCK_PERIOD = 86400;
+                    if (p.status === 'Open') {
+                        timeInfo = formatTimeRemaining(p.createdAt + VOTING_PERIOD);
+                    } else if (p.status === 'Passed') {
+                        timeInfo = 'Time-lock: ' + formatTimeRemaining(p.passedAt + TIMELOCK_PERIOD);
+                    } else if (p.status === 'Executable') {
+                        timeInfo = 'Ready for execution';
+                    }
 
                     const card = document.createElement('div');
                     card.className = 'proposal-card';
                     card.innerHTML = `
-                    <div class="proposal-meta">
-                        <span class="proposal-id">#${id.value}</span>
-                        <span class="badge badge-${status.toLowerCase()}">${status}</span>
-                    </div>
-                    <div class="proposal-desc">${desc.value}</div>
-                    <div class="proposal-meta">
-                        <span>Receiver: ${recv.value.substring(0, 8)}...</span>
-                        <span>Amount: ${formatClaw(amount.value)} CLAW</span>
-                    </div>
-                    <div class="vote-bar">
-                        <div class="vote-progress" style="width: 45%"></div> <!-- Placeholder % -->
-                    </div>
-                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                        <button onclick="governance.vote(${id.value})" style="padding: 0.4rem; font-size: 0.7rem;">Vote YES</button>
-                        <button onclick="governance.execute(${id.value})" class="secondary-btn" style="padding: 0.4rem; font-size: 0.7rem;">Execute</button>
-                    </div>
-                `;
+                        <div class="proposal-meta">
+                            <span class="proposal-id">#${p.id} &middot; Post #${p.bulletinPostId}</span>
+                            <span class="badge ${badgeClass}">${escapeHtml(p.status)}</span>
+                        </div>
+                        <div class="proposal-desc">${escapeHtml(p.description)}</div>
+                        <div class="proposal-meta">
+                            <span>${escapeHtml(p.receiver)}</span>
+                            <span>${formatClaw(p.amount)}</span>
+                        </div>
+                        <div class="vote-bar">
+                            <div class="vote-yes" style="width:${yesPct}%"></div>
+                            <div class="vote-no" style="width:${noPct}%"></div>
+                        </div>
+                        <div class="vote-labels">
+                            <span class="yes">YES ${yesPct}%</span>
+                            <span class="no">NO ${noPct}%</span>
+                        </div>
+                        ${timeInfo ? `<div class="time-remaining">${escapeHtml(timeInfo)}</div>` : ''}
+                        ${p.status === 'Open' ? `
+                        <div class="btn-group">
+                            <button class="btn-yes" onclick="governance.vote(${p.id}, true)">Vote Yes</button>
+                            <button class="btn-no" onclick="governance.vote(${p.id}, false)">Vote No</button>
+                        </div>` : ''}
+                        ${p.status === 'Executable' ? `
+                        <div class="btn-group">
+                            <button class="btn-action" onclick="governance.execute(${p.id})">Execute</button>
+                        </div>` : ''}
+                    `;
                     list.appendChild(card);
                 });
             }
         };
 
+        // ── Actions (log-only — agents use clawpy to sign) ──
+
         const vault = {
             deposit() {
                 const amt = document.getElementById('tx-amount').value;
-                log(`ACTION: Deposit requested for ${amt} CLAW. Use clawpy to sign transaction.`);
+                if (!amt || parseFloat(amt) <= 0) { log('ERROR: Enter a valid amount'); return; }
+                const atto = BigInt(Math.floor(parseFloat(amt) * 1e18));
+                log(`DEPOSIT: ${amt} CLAW (${atto} atto). Sign with clawpy:`);
+                log(`  clawpy contract call ${contractAddr} --function=deposit --value=${atto} --gas-limit=30000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
             },
             withdraw() {
                 const shares = document.getElementById('tx-shares').value;
-                log(`ACTION: Withdrawal requested for ${shares} shares.`);
+                if (!shares || parseInt(shares) <= 0) { log('ERROR: Enter valid share amount'); return; }
+                log(`WITHDRAW: ${shares} shares. Sign with clawpy:`);
+                log(`  clawpy contract call ${contractAddr} --function=withdraw --arguments ${shares} --gas-limit=20000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
             }
         };
 
         const governance = {
-            vote(id) {
-                log(`ACTION: Voting YES on Proposal #${id}`);
+            vote(id, support) {
+                const dir = support ? 'YES' : 'NO';
+                const arg = support ? 1 : 0;
+                log(`VOTE ${dir} on Proposal #${id}. Sign with clawpy:`);
+                log(`  clawpy contract call ${contractAddr} --function=vote --arguments ${id} ${arg} --gas-limit=10000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
             },
             execute(id) {
-                log(`ACTION: Requesting execution for Proposal #${id}`);
+                log(`EXECUTE Proposal #${id}. Sign with clawpy:`);
+                log(`  clawpy contract call ${contractAddr} --function=executeProposal --arguments ${id} --gas-limit=20000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
             },
             submit() {
                 const desc = document.getElementById('prop-desc').value;
-                log(`ACTION: Submitting new proposal: "${desc.substring(0, 20)}..."`);
+                const recv = document.getElementById('prop-recv').value;
+                const amt = document.getElementById('prop-amount').value;
+                const postId = document.getElementById('prop-post-id').value;
+                if (!desc || !recv || !amt || !postId) { log('ERROR: Fill in all proposal fields'); return; }
+                const atto = BigInt(Math.floor(parseFloat(amt) * 1e18));
+                log(`SUBMIT PROPOSAL: "${desc.substring(0, 40)}..." → ${recv.substring(0, 16)}... for ${amt} CLAW`);
+                log(`  clawpy contract call ${contractAddr} --function=submitProposal --arguments str:${desc} ${recv} ${atto} ${postId} --gas-limit=15000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
             }
         };
 
+        // ── URL query param support ──
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('fund')) {
+            document.getElementById('sc-address').value = params.get('fund');
+            fund.connect();
+        }
     </script>
 </body>
 
