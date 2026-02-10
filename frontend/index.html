@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLAO Ventures — DAO Treasury</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0a0a0c;
+            --terminal-bg: #121217;
+            --accent-color: #E34543;
+            /* Rebrand Color */
+            --text-color: #e0e0e0;
+            --dim-text: #888;
+            --border-color: #2a2a35;
+            --success-color: #00ff9d;
+            --warning-color: #ffb800;
+            --error-color: #ff4d4d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Fira Code', monospace;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: var(--success-color);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 10px var(--success-color);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background-color: var(--terminal-bg);
+            border: 1px solid var(--border-color);
+            padding: 1.5rem;
+            border-radius: 4px;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .panel-header {
+            font-size: 0.8rem;
+            color: var(--dim-text);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        h2 {
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-color);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1rem;
+            border-left: 2px solid var(--accent-color);
+        }
+
+        .metric-label {
+            font-size: 0.7rem;
+            color: var(--dim-text);
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+
+        .proposal-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .proposal-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-color);
+        }
+
+        .proposal-id {
+            color: var(--dim-text);
+            font-size: 0.8rem;
+        }
+
+        .proposal-desc {
+            margin: 0.5rem 0;
+            font-size: 1rem;
+        }
+
+        .proposal-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: var(--dim-text);
+        }
+
+        .vote-bar {
+            height: 4px;
+            background: var(--border-color);
+            margin-top: 1rem;
+            position: relative;
+        }
+
+        .vote-progress {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 2px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+
+        .badge-open {
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .badge-executed {
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+        }
+
+        .badge-failed {
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--dim-text);
+            margin-bottom: 0.5rem;
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 0.8rem;
+            font-family: inherit;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            background: var(--accent-color);
+            color: black;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            text-transform: uppercase;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #00dce6;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .secondary-btn {
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            margin-top: 0.5rem;
+        }
+
+        .secondary-btn:hover {
+            background: rgba(0, 242, 255, 0.1);
+        }
+
+        .contract-input {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .contract-input input {
+            flex: 1;
+        }
+
+        .contract-input button {
+            width: auto;
+        }
+
+        #log-panel {
+            font-size: 0.8rem;
+            max-height: 300px;
+            overflow-y: auto;
+            color: var(--dim-text);
+        }
+
+        .log-entry {
+            margin-bottom: 0.5rem;
+            border-left: 2px solid var(--border-color);
+            padding-left: 0.5rem;
+        }
+
+        .log-time {
+            color: var(--accent-color);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-color);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--dim-text);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo">Autonomous Fund</div>
+            <div id="connection-status">
+                <span class="status-dot"></span>
+                <span id="network-info">Claws Mainnet</span>
+            </div>
+        </header>
+
+        <div class="contract-input">
+            <input type="text" id="sc-address" placeholder="Enter Contract Address (claw1...)"
+                value="claw1qqqqqqqqqqqqqpgqy4x50k4sxaqj0dlmgmrj93krldw54expkgcqnzkmx3">
+            <button onclick="config.connect()">Connect</button>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total AUM</div>
+                <div class="metric-value" id="val-aum">0.00 CLAW</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Total Shares</div>
+                <div class="metric-value" id="val-shares">0.00 AF</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Share Price</div>
+                <div class="metric-value" id="val-price">1.00 CLAW</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Members</div>
+                <div class="metric-value" id="val-members">0</div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <main>
+                <div class="panel">
+                    <div class="panel-header">
+                        <span>Governance</span>
+                        <span id="proposal-count">0 proposals</span>
+                    </div>
+                    <h2>Active Proposals</h2>
+                    <div id="proposal-list">
+                        <!-- Proposals will be injected here -->
+                        <div style="text-align: center; color: var(--dim-text); padding: 2rem;">
+                            Waiting for connection...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">Console Logs</div>
+                    <div id="log-panel">
+                        <div class="log-entry">
+                            <span class="log-time">[18:00:00]</span> SYSTEM: Awaiting agent initialization...
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <aside>
+                <div class="panel">
+                    <h2>Member Actions</h2>
+                    <div class="form-group">
+                        <label>Amount ($CLAW)</label>
+                        <input type="number" id="tx-amount" placeholder="0.00">
+                    </div>
+                    <button onclick="vault.deposit()">Deposit Capital</button>
+                    <div style="margin-top: 1rem;">
+                        <label>Shares to Burn</label>
+                        <input type="number" id="tx-shares" placeholder="0.00">
+                    </div>
+                    <button onclick="vault.withdraw()" class="secondary-btn">Withdraw Profit</button>
+                </div>
+
+                <div class="panel">
+                    <h2>New Proposal</h2>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea id="prop-desc" rows="3"
+                            placeholder="e.g. Invest in OpenDex liquidity pool #5"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Recipient Address</label>
+                        <input type="text" id="prop-recv" placeholder="claw1...">
+                    </div>
+                    <div class="form-group">
+                        <label>Amount ($CLAW)</label>
+                        <input type="number" id="prop-amount" placeholder="0.00">
+                    </div>
+                    <button onclick="governance.submit()">Submit Proposal</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <div id="loading" class="loading-overlay">
+        <div>DECODING CHAIN DATA...</div>
+    </div>
+
+    <script>
+        const PROXY_URL = 'https://api.claws.network';
+        let contractAddr = '';
+
+        // --- Utilities ---
+        const log = (msg) => {
+            const panel = document.getElementById('log-panel');
+            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
+            panel.prepend(entry);
+        };
+
+        const formatClaw = (atto) => (Number(atto) / 1e18).toFixed(2);
+
+        // --- Binary Decoding (from CLAUDE.md patterns) ---
+        function decodeBase64(b64) {
+            return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+        }
+
+        function readU64(bytes, offset) {
+            let val = 0n;
+            for (let i = 0; i < 8; i++) {
+                val = (val << 8n) | BigInt(bytes[offset + i]);
+            }
+            return { value: Number(val), next: offset + 8 };
+        }
+
+        function readU32(bytes, offset) {
+            return {
+                value: (bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3],
+                next: offset + 4
+            };
+        }
+
+        function readBigUint(bytes, offset) {
+            const { value: len, next: start } = readU32(bytes, offset);
+            let val = 0n;
+            for (let i = 0; i < len; i++) {
+                val = (val << 8n) | BigInt(bytes[start + i]);
+            }
+            return { value: val, next: start + len };
+        }
+
+        function readManagedBuffer(bytes, offset) {
+            const { value: len, next: start } = readU32(bytes, offset);
+            const text = new TextDecoder().decode(bytes.slice(start, start + len));
+            return { value: text, next: start + len };
+        }
+
+        function readAddress(bytes, offset) {
+            const pubkey = bytes.slice(offset, offset + 32);
+            // Simple hex for now as bech32 is heavy
+            const hex = Array.from(pubkey).map(b => b.toString(16).padStart(2, '0')).join('');
+            return { value: '0x' + hex, next: offset + 32 };
+        }
+
+        // --- API Interactions ---
+        const api = {
+            async query(func, args = []) {
+                try {
+                    const resp = await fetch(`${PROXY_URL}/vm-values/query`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ scAddress: contractAddr, funcName: func, args })
+                    });
+                    const json = await resp.json();
+                    if (json.data?.data?.returnCode !== 'ok') {
+                        throw new Error(json.data?.data?.returnMessage || 'Query failed');
+                    }
+                    return json.data.data.returnData;
+                } catch (err) {
+                    log(`ERROR: ${err.message}`);
+                    return null;
+                }
+            }
+        };
+
+        // --- Modules ---
+        const config = {
+            async connect() {
+                contractAddr = document.getElementById('sc-address').value;
+                if (!contractAddr.startsWith('claw1')) {
+                    log('INVALID ADDRESS: Must start with claw1');
+                    return;
+                }
+                log(`CONNECTED to fund at ${contractAddr.substring(0, 12)}...`);
+                this.refresh();
+                setInterval(() => this.refresh(), 15000); // Poll every 15s
+            },
+
+            async refresh() {
+                document.getElementById('loading').style.display = 'flex';
+
+                // 1. Stats
+                const stats = await api.query('getFundStats');
+                if (stats) {
+                    const aum = decodeBase64(stats[0]);
+                    const shares = decodeBase64(stats[1]);
+                    const members = decodeBase64(stats[2]);
+
+                    // Assuming small enough for direct decode for members
+                    const memberCount = members.length > 0 ? members[members.length - 1] : 0;
+
+                    // Simple biguint decode (needs robust implementation)
+                    document.getElementById('val-aum').innerText = `${formatClaw(readBigUint(aum, 0).value)} CLAW`;
+                    document.getElementById('val-shares').innerText = `${formatClaw(readBigUint(shares, 0).value)} AF`;
+                    document.getElementById('val-members').innerText = memberCount;
+                }
+
+                // 2. Share Price
+                const price = await api.query('getSharePrice');
+                if (price) {
+                    const p = readBigUint(decodeBase64(price[0]), 0).value;
+                    document.getElementById('val-price').innerText = `${(Number(p) / 1e18).toFixed(4)} CLAW`;
+                }
+
+                // 3. Proposals
+                const props = await api.query('getProposals');
+                if (props) {
+                    this.renderProposals(props);
+                }
+
+                document.getElementById('loading').style.display = 'none';
+            },
+
+            renderProposals(encodedProps) {
+                const list = document.getElementById('proposal-list');
+                list.innerHTML = '';
+                document.getElementById('proposal-count').innerText = `${encodedProps.length} proposals`;
+
+                encodedProps.forEach(p => {
+                    const data = decodeBase64(p);
+                    // Schema: id (u64), proposer (addr), desc (buf), recv (addr), amount (biguint), status (enum), votes (biguint), time (u64)
+                    let offset = 0;
+                    const id = readU64(data, offset); offset = id.next;
+                    const proposer = readAddress(data, offset); offset = proposer.next;
+                    const desc = readManagedBuffer(data, offset); offset = desc.next;
+                    const recv = readAddress(data, offset); offset = recv.next;
+                    const amount = readBigUint(data, offset); offset = amount.next;
+                    const statusIdx = data[offset++];
+                    const votes = readBigUint(data, offset); offset = votes.next;
+                    const time = readU64(data, offset);
+
+                    const statusMap = ['Open', 'Executed', 'Failed'];
+                    const status = statusMap[statusIdx] || 'Unknown';
+
+                    const card = document.createElement('div');
+                    card.className = 'proposal-card';
+                    card.innerHTML = `
+                    <div class="proposal-meta">
+                        <span class="proposal-id">#${id.value}</span>
+                        <span class="badge badge-${status.toLowerCase()}">${status}</span>
+                    </div>
+                    <div class="proposal-desc">${desc.value}</div>
+                    <div class="proposal-meta">
+                        <span>Receiver: ${recv.value.substring(0, 8)}...</span>
+                        <span>Amount: ${formatClaw(amount.value)} CLAW</span>
+                    </div>
+                    <div class="vote-bar">
+                        <div class="vote-progress" style="width: 45%"></div> <!-- Placeholder % -->
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                        <button onclick="governance.vote(${id.value})" style="padding: 0.4rem; font-size: 0.7rem;">Vote YES</button>
+                        <button onclick="governance.execute(${id.value})" class="secondary-btn" style="padding: 0.4rem; font-size: 0.7rem;">Execute</button>
+                    </div>
+                `;
+                    list.appendChild(card);
+                });
+            }
+        };
+
+        const vault = {
+            deposit() {
+                const amt = document.getElementById('tx-amount').value;
+                log(`ACTION: Deposit requested for ${amt} CLAW. Use clawpy to sign transaction.`);
+            },
+            withdraw() {
+                const shares = document.getElementById('tx-shares').value;
+                log(`ACTION: Withdrawal requested for ${shares} shares.`);
+            }
+        };
+
+        const governance = {
+            vote(id) {
+                log(`ACTION: Voting YES on Proposal #${id}`);
+            },
+            execute(id) {
+                log(`ACTION: Requesting execution for Proposal #${id}`);
+            },
+            submit() {
+                const desc = document.getElementById('prop-desc').value;
+                log(`ACTION: Submitting new proposal: "${desc.substring(0, 20)}..."`);
+            }
+        };
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,11 @@
+[package]
+name = "autonomous-fund-meta"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[dependencies.multiversx-sc-meta-lib]
+version = "0.54.0"
+
+[dependencies.autonomous-fund]
+path = ".."
