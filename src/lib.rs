@@ -283,6 +283,7 @@ pub trait AutonomousFund {
         };
         self.vote_records(proposal_id).push(&vote_record);
         self.has_voted(proposal_id, &caller).set(true);
+        self.agent_votes(&caller).push(&proposal_id);
         self.proposals(proposal_id).set(&proposal);
 
         self.vote_event(proposal_id, &caller, support, &user_shares);
@@ -312,8 +313,8 @@ pub trait AutonomousFund {
             "Voting period has not ended"
         );
 
-        let total_shares = self.total_shares().get();
-        let quorum_requirement = (&total_shares * QUORUM_PERCENTAGE) / 100u64;
+        let effective_shares = self.voting_shares();
+        let quorum_requirement = (&effective_shares * QUORUM_PERCENTAGE) / 100u64;
 
         if proposal.yes_votes >= quorum_requirement && proposal.yes_votes > proposal.no_votes {
             proposal.status = ProposalStatus::Passed;
@@ -355,8 +356,8 @@ pub trait AutonomousFund {
             );
 
             // Re-verify quorum still holds after potential rage-quits
-            let total_shares = self.total_shares().get();
-            let quorum_requirement = (&total_shares * QUORUM_PERCENTAGE) / 100u64;
+            let effective_shares = self.voting_shares();
+            let quorum_requirement = (&effective_shares * QUORUM_PERCENTAGE) / 100u64;
             if proposal.yes_votes < quorum_requirement || proposal.yes_votes <= proposal.no_votes {
                 proposal.status = ProposalStatus::Failed;
                 self.proposals(proposal_id).set(&proposal);
@@ -460,14 +461,80 @@ pub trait AutonomousFund {
     }
 
     // ========================================================
+    // INTERNAL: voting shares (excludes dead shares)
+    // Dead shares exist only to prevent inflation attacks and
+    // carry no voting power — exclude from quorum denominator.
+    // ========================================================
+
+    fn voting_shares(&self) -> BigUint {
+        let total = self.total_shares().get();
+        let dead = BigUint::from(DEAD_SHARES);
+        if total > dead {
+            total - dead
+        } else {
+            BigUint::zero()
+        }
+    }
+
+    // ========================================================
     // INTERNAL: rage-quit processing
     // When an agent withdraws, remove their vote weight from
-    // any Passed proposals currently in time-lock.
+    // any Open or Passed proposals with active windows.
     // ========================================================
 
     fn process_rage_quit(&self, agent: &ManagedAddress) {
-        let count = self.proposal_count().get();
         let now = self.blockchain().get_block_timestamp();
+        let vote_list_len = self.agent_votes(agent).len();
+
+        // If agent has no tracked votes (voted before upgrade),
+        // fall back to scanning all proposals.
+        if vote_list_len == 0 {
+            self.process_rage_quit_legacy(agent, now);
+            return;
+        }
+
+        for idx in 1..=vote_list_len {
+            let proposal_id = self.agent_votes(agent).get(idx);
+
+            if self.proposals(proposal_id).is_empty() {
+                continue;
+            }
+
+            let mut proposal = self.proposals(proposal_id).get();
+
+            // Process Open and Passed proposals only
+            match proposal.status {
+                ProposalStatus::Open => {
+                    // Only if voting window is still active
+                    if now > proposal.created_at + VOTING_PERIOD {
+                        continue;
+                    }
+                }
+                ProposalStatus::Passed => {
+                    // Only if still within time-lock window
+                    if now > proposal.passed_at + TIMELOCK_PERIOD {
+                        continue;
+                    }
+                }
+                _ => {
+                    continue;
+                }
+            }
+
+            if !self.has_voted(proposal_id, agent).get() {
+                continue;
+            }
+
+            self.remove_vote_weight(&mut proposal, proposal_id, agent);
+            self.proposals(proposal_id).set(&proposal);
+            self.rage_quit_event(proposal_id, agent);
+        }
+    }
+
+    /// Legacy fallback for agents who voted before the upgrade
+    /// (their agent_votes mapper is empty). Scans all proposals.
+    fn process_rage_quit_legacy(&self, agent: &ManagedAddress, now: u64) {
+        let count = self.proposal_count().get();
 
         for proposal_id in 1..=count {
             if self.proposals(proposal_id).is_empty() {
@@ -476,48 +543,61 @@ pub trait AutonomousFund {
 
             let mut proposal = self.proposals(proposal_id).get();
 
-            // Only process proposals in Passed status (time-lock active)
-            if proposal.status != ProposalStatus::Passed {
-                continue;
+            match proposal.status {
+                ProposalStatus::Open => {
+                    if now > proposal.created_at + VOTING_PERIOD {
+                        continue;
+                    }
+                }
+                ProposalStatus::Passed => {
+                    if now > proposal.passed_at + TIMELOCK_PERIOD {
+                        continue;
+                    }
+                }
+                _ => {
+                    continue;
+                }
             }
 
-            // Only if still within time-lock window
-            if now > proposal.passed_at + TIMELOCK_PERIOD {
-                continue;
-            }
-
-            // Check if this agent voted on this proposal
             if !self.has_voted(proposal_id, agent).get() {
                 continue;
             }
 
-            // Find their vote record and remove the weight
-            let vote_count = self.vote_records(proposal_id).len();
-            for i in 1..=vote_count {
-                let record = self.vote_records(proposal_id).get(i);
-                if record.voter == *agent {
-                    match record.direction {
-                        VoteDirection::Yes => {
-                            if proposal.yes_votes >= record.weight {
-                                proposal.yes_votes -= &record.weight;
-                            } else {
-                                proposal.yes_votes = BigUint::zero();
-                            }
-                        }
-                        VoteDirection::No => {
-                            if proposal.no_votes >= record.weight {
-                                proposal.no_votes -= &record.weight;
-                            } else {
-                                proposal.no_votes = BigUint::zero();
-                            }
-                        }
-                    }
-                    break;
-                }
-            }
-
+            self.remove_vote_weight(&mut proposal, proposal_id, agent);
             self.proposals(proposal_id).set(&proposal);
             self.rage_quit_event(proposal_id, agent);
+        }
+    }
+
+    /// Finds an agent's vote record on a proposal and subtracts their weight.
+    fn remove_vote_weight(
+        &self,
+        proposal: &mut Proposal<Self::Api>,
+        proposal_id: u64,
+        agent: &ManagedAddress,
+    ) {
+        let vote_count = self.vote_records(proposal_id).len();
+        for i in 1..=vote_count {
+            let record = self.vote_records(proposal_id).get(i);
+            if record.voter == *agent {
+                match record.direction {
+                    VoteDirection::Yes => {
+                        if proposal.yes_votes >= record.weight {
+                            proposal.yes_votes -= &record.weight;
+                        } else {
+                            proposal.yes_votes = BigUint::zero();
+                        }
+                    }
+                    VoteDirection::No => {
+                        if proposal.no_votes >= record.weight {
+                            proposal.no_votes -= &record.weight;
+                        } else {
+                            proposal.no_votes = BigUint::zero();
+                        }
+                    }
+                }
+                break;
+            }
         }
     }
 
@@ -533,9 +613,18 @@ pub trait AutonomousFund {
     #[view(getProposals)]
     fn get_proposals(&self, from: u64, count: u64) -> MultiValueEncoded<Proposal<Self::Api>> {
         let mut result = MultiValueEncoded::new();
+        if count == 0 {
+            return result;
+        }
         let total = self.proposal_count().get();
+        if total == 0 {
+            return result;
+        }
         let start = if from == 0 { 1u64 } else { from };
-        let end = core::cmp::min(start + count - 1, total);
+        if start > total {
+            return result;
+        }
+        let end = core::cmp::min(start.saturating_add(count - 1), total);
 
         for i in start..=end {
             if !self.proposals(i).is_empty() {
@@ -763,4 +852,9 @@ pub trait AutonomousFund {
 
     #[storage_mapper("epochSpent")]
     fn epoch_spent(&self, epoch: u64) -> SingleValueMapper<BigUint>;
+
+    // ── Per-agent vote tracking for efficient rage-quit ──
+
+    #[storage_mapper("agentVotes")]
+    fn agent_votes(&self, agent: &ManagedAddress) -> VecMapper<u64>;
 }
