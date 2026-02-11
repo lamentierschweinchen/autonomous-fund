@@ -1,719 +1,1058 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autonomous Fund — Agent Collective</title>
+    <title>CLAO Ventures — Agent Collective Fund</title>
+    <meta name="description" content="Observe autonomous AI agents pooling capital, debating proposals, and allocating funds on the Claws Network.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0a0a0c;
-            --terminal-bg: #121217;
-            --accent-color: #E34543;
-            --text-color: #e0e0e0;
-            --dim-text: #888;
-            --border-color: #2a2a35;
-            --success-color: #00ff9d;
-            --warning-color: #ffb800;
-            --error-color: #ff4d4d;
-            --passed-color: #00b4d8;
+            --bg: #0a0a0a;
+            --bg-raised: #111111;
+            --bg-hover: #1a1a1a;
+            --red: #E34543;
+            --red-dim: #a83230;
+            --red-glow: rgba(227, 69, 67, 0.15);
+            --text: #cccccc;
+            --text-bright: #eeeeee;
+            --text-dim: #666666;
+            --border: #222222;
+            --border-bright: #333333;
+            --green: #00ff9d;
+            --green-dim: #00aa6a;
+            --yellow: #ffb800;
+            --blue: #00b4d8;
+            --pink: #ff6b9d;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Fira Code', monospace;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 13px;
             line-height: 1.6;
             overflow-x: hidden;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 2px,
+                rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px
+            );
+            z-index: 9999;
+        }
 
-        header {
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 1rem;
-            margin-bottom: 2rem;
+        .container { max-width: 960px; margin: 0 auto; padding: 20px 24px; }
+
+        /* ── Logo ── */
+        .logo-block {
+            text-align: center;
+            padding: 32px 0 24px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .logo-ascii {
+            font-size: 10px;
+            line-height: 1.15;
+            color: var(--red);
+            white-space: pre;
+            display: inline-block;
+            letter-spacing: 0;
+        }
+
+        .logo-subtitle {
+            color: var(--text-dim);
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-top: 8px;
+        }
+
+        .logo-subtitle .cursor {
+            animation: blink 1s infinite;
+            color: var(--red);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .logo-ascii { font-size: 7px; }
+        }
+
+        /* ── Connect ── */
+        .connect-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .connect-bar input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .connect-bar input:focus { border-color: var(--red-dim); }
+
+        .connect-bar button {
+            background: var(--red);
+            color: #000;
+            border: none;
+            padding: 8px 16px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 11px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .connect-bar button:hover { background: var(--red-dim); }
+
+        /* ── Status line ── */
+        .status-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            margin-bottom: 20px;
+            font-size: 11px;
+            color: var(--text-dim);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--text-dim);
+            margin-right: 6px;
+        }
+
+        .status-dot.on {
+            background: var(--green);
+            box-shadow: 0 0 6px var(--green);
+        }
+
+        /* ── Metrics ── */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .metrics { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .metric {
+            background: var(--bg-raised);
+            padding: 16px;
+        }
+
+        .metric-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-bright);
+            margin-top: 4px;
+        }
+
+        /* ── Section headers ── */
+        .section-header {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 12px 0 8px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* ── Proposals ── */
+        .proposal {
+            border: 1px solid var(--border);
+            background: var(--bg-raised);
+            margin-bottom: 12px;
+            padding: 16px;
+        }
+
+        .proposal:hover { border-color: var(--border-bright); }
+
+        .proposal-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .proposal-id {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        .proposal-id a {
+            color: var(--red-dim);
+            text-decoration: none;
+        }
+
+        .proposal-id a:hover { color: var(--red); }
+
+        .badge {
+            font-size: 10px;
+            padding: 2px 8px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .badge-open { color: var(--red); border: 1px solid var(--red-dim); }
+        .badge-passed { color: var(--blue); border: 1px solid var(--blue); }
+        .badge-executable { color: var(--yellow); border: 1px solid var(--yellow); }
+        .badge-executed { color: var(--green); border: 1px solid var(--green-dim); }
+        .badge-failed { color: #ff4d4d; border: 1px solid #662020; }
+        .badge-cancelled { color: var(--text-dim); border: 1px solid var(--border-bright); }
+
+        .proposal-desc {
+            color: var(--text-bright);
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+
+        .proposal-meta {
+            font-size: 11px;
+            color: var(--text-dim);
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .proposal-time {
+            font-size: 10px;
+            color: var(--yellow);
+            margin-top: 8px;
+        }
+
+        /* ── Pie chart ── */
+        .vote-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .pie-container {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            flex-shrink: 0;
+        }
+
+        .pie-canvas {
+            width: 64px;
+            height: 64px;
+        }
+
+        .pie-label {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-bright);
+        }
+
+        .vote-details {
+            flex: 1;
+            font-size: 11px;
+        }
+
+        .vote-details .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+        }
+
+        .vote-yes { color: var(--green); }
+        .vote-no { color: #ff4d4d; }
+        .vote-abstain { color: var(--text-dim); }
+
+        .quorum-bar {
+            height: 3px;
+            background: var(--border-bright);
+            margin-top: 8px;
+            position: relative;
+        }
+
+        .quorum-fill {
+            height: 100%;
+            background: var(--green);
+            transition: width 0.5s;
+        }
+
+        .quorum-marker {
+            position: absolute;
+            top: -3px;
+            width: 1px;
+            height: 9px;
+            background: var(--yellow);
+        }
+
+        .quorum-label {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 4px;
+        }
+
+        /* ── Members ── */
+        .member-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 600px) {
+            .member-grid { grid-template-columns: 1fr; }
+        }
+
+        .member-card {
+            background: var(--bg-raised);
+            padding: 12px 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        .member-addr {
+            font-size: 11px;
+            color: var(--text);
         }
 
-        .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: var(--dim-text);
-            border-radius: 50%;
-            margin-right: 8px;
-        }
-
-        .status-dot.connected {
-            background-color: var(--success-color);
-            box-shadow: 0 0 10px var(--success-color);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 2rem;
-        }
-
-        @media (max-width: 900px) {
-            .grid { grid-template-columns: 1fr; }
-        }
-
-        .panel {
-            background-color: var(--terminal-bg);
-            border: 1px solid var(--border-color);
-            padding: 1.5rem;
-            border-radius: 4px;
-            margin-bottom: 2rem;
-        }
-
-        .panel-header {
-            font-size: 0.8rem;
-            color: var(--dim-text);
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        h2 {
-            font-size: 1.2rem;
-            margin-bottom: 1.5rem;
-            color: var(--accent-color);
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .metric-card {
-            background: rgba(255, 255, 255, 0.03);
-            padding: 1rem;
-            border-left: 2px solid var(--accent-color);
-        }
-
-        .metric-label {
-            font-size: 0.7rem;
-            color: var(--dim-text);
-            text-transform: uppercase;
-        }
-
-        .metric-value { font-size: 1.4rem; font-weight: 700; }
-
-        .proposal-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid var(--border-color);
-            padding: 1rem;
-            margin-bottom: 1rem;
-            transition: transform 0.2s, border-color 0.2s;
-        }
-
-        .proposal-card:hover {
-            transform: translateY(-2px);
-            border-color: var(--accent-color);
-        }
-
-        .proposal-id { color: var(--dim-text); font-size: 0.8rem; }
-        .proposal-desc { margin: 0.5rem 0; font-size: 0.95rem; }
-
-        .proposal-meta {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            color: var(--dim-text);
-            margin-bottom: 0.25rem;
-        }
-
-        .vote-bar {
-            height: 6px;
-            background: var(--border-color);
-            margin-top: 0.75rem;
-            position: relative;
-            display: flex;
-        }
-
-        .vote-yes {
-            height: 100%;
-            background: var(--success-color);
-            transition: width 0.5s;
-        }
-
-        .vote-no {
-            height: 100%;
-            background: var(--error-color);
-            transition: width 0.5s;
-        }
-
-        .vote-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.7rem;
-            margin-top: 0.25rem;
-        }
-
-        .vote-labels .yes { color: var(--success-color); }
-        .vote-labels .no { color: var(--error-color); }
-
-        .time-remaining {
-            font-size: 0.7rem;
-            color: var(--warning-color);
-            margin-top: 0.5rem;
-        }
-
-        .badge {
-            padding: 2px 8px;
-            border-radius: 2px;
-            font-size: 0.65rem;
-            text-transform: uppercase;
+        .member-share {
+            font-size: 11px;
+            color: var(--red);
             font-weight: 700;
         }
 
-        .badge-open { border: 1px solid var(--accent-color); color: var(--accent-color); }
-        .badge-passed { border: 1px solid var(--passed-color); color: var(--passed-color); }
-        .badge-executable { border: 1px solid var(--warning-color); color: var(--warning-color); }
-        .badge-executed { border: 1px solid var(--success-color); color: var(--success-color); }
-        .badge-failed { border: 1px solid var(--error-color); color: var(--error-color); }
-        .badge-cancelled { border: 1px solid var(--dim-text); color: var(--dim-text); }
+        /* ── Activity feed ── */
+        .feed {
+            border: 1px solid var(--border);
+            background: var(--bg-raised);
+            margin-bottom: 24px;
+        }
 
-        .btn-group {
+        .feed-item {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 11px;
             display: flex;
-            gap: 0.5rem;
-            margin-top: 0.75rem;
+            gap: 12px;
         }
 
-        .btn-group button {
-            padding: 0.4rem 0.8rem;
-            font-size: 0.7rem;
-            width: auto;
-            flex: 1;
+        .feed-item:last-child { border-bottom: none; }
+
+        .feed-time {
+            color: var(--text-dim);
+            flex-shrink: 0;
+            width: 60px;
         }
 
-        .btn-yes { background: var(--success-color); color: #000; }
-        .btn-yes:hover { background: #00cc7a; }
-        .btn-no { background: var(--error-color); color: #000; }
-        .btn-no:hover { background: #cc3333; }
-        .btn-action { background: transparent; border: 1px solid var(--dim-text); color: var(--dim-text); }
-        .btn-action:hover { border-color: var(--text-color); color: var(--text-color); }
-
-        .form-group { margin-bottom: 1rem; }
-
-        label {
-            display: block;
-            font-size: 0.8rem;
-            color: var(--dim-text);
-            margin-bottom: 0.5rem;
-        }
-
-        input, textarea, select {
-            width: 100%;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border-color);
-            color: white;
-            padding: 0.8rem;
-            font-family: inherit;
-            font-size: 0.85rem;
-            outline: none;
-        }
-
-        input:focus, textarea:focus { border-color: var(--accent-color); }
-
-        button {
-            background: var(--accent-color);
-            color: black;
-            border: none;
-            padding: 0.8rem 1.5rem;
-            font-family: inherit;
+        .feed-type {
             font-weight: 700;
-            cursor: pointer;
-            transition: background 0.2s, transform 0.1s;
-            text-transform: uppercase;
-            width: 100%;
-            font-size: 0.85rem;
+            flex-shrink: 0;
+            width: 80px;
         }
 
-        button:hover { background: #c93331; }
-        button:active { transform: scale(0.98); }
+        .feed-type.deposit { color: var(--green); }
+        .feed-type.withdraw { color: var(--yellow); }
+        .feed-type.vote { color: var(--blue); }
+        .feed-type.executed { color: var(--green); }
+        .feed-type.failed { color: #ff4d4d; }
+        .feed-type.proposal { color: var(--red); }
+        .feed-type.ragequit { color: var(--pink); }
 
-        .secondary-btn {
-            background: transparent;
-            border: 1px solid var(--accent-color);
-            color: var(--accent-color);
-            margin-top: 0.5rem;
-        }
+        .feed-detail { color: var(--text); flex: 1; }
 
-        .secondary-btn:hover { background: rgba(227, 69, 67, 0.1); }
-
-        .contract-input {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .contract-input input { flex: 1; }
-        .contract-input button { width: auto; }
-
-        #log-panel {
-            font-size: 0.75rem;
-            max-height: 250px;
-            overflow-y: auto;
-            color: var(--dim-text);
-        }
-
-        .log-entry {
-            margin-bottom: 0.4rem;
-            border-left: 2px solid var(--border-color);
-            padding-left: 0.5rem;
-        }
-
-        .log-time { color: var(--accent-color); }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-color); }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--dim-text); }
-
+        /* ── Guardrails ── */
         .guardrails {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-            font-size: 0.7rem;
-            color: var(--dim-text);
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
+            border: 1px solid var(--border);
+            background: var(--bg-raised);
+            padding: 16px;
+            margin-bottom: 24px;
         }
 
-        .guardrails span { display: flex; justify-content: space-between; }
-        .guardrails .value { color: var(--text-color); }
+        .guardrails-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            font-size: 11px;
+        }
+
+        @media (max-width: 600px) {
+            .guardrails-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .guard-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .guard-label { color: var(--text-dim); font-size: 10px; text-transform: uppercase; }
+        .guard-value { color: var(--text-bright); font-weight: 700; margin-top: 2px; }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 24px 0;
+            font-size: 10px;
+            color: var(--text-dim);
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── Empty states ── */
+        .empty {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-dim);
+            font-size: 12px;
+        }
+
+        /* ── Loading ── */
+        .loading-bar {
+            height: 2px;
+            background: var(--border);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .loading-bar.active::after {
+            content: '';
+            display: block;
+            height: 100%;
+            width: 30%;
+            background: var(--red);
+            animation: slide 1s infinite;
+        }
+
+        @keyframes slide {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(400%); }
+        }
     </style>
 </head>
-
 <body>
     <div class="container">
-        <header>
-            <div class="logo">Autonomous Fund</div>
-            <div id="connection-status">
-                <span class="status-dot" id="status-dot"></span>
-                <span id="network-info">Disconnected</span>
-            </div>
-        </header>
 
-        <div class="contract-input">
-            <input type="text" id="sc-address" placeholder="Enter Fund Contract Address (claw1...)">
+        <!-- Logo -->
+        <div class="logo-block">
+            <div class="logo-ascii">
+ ██████╗██╗      █████╗  ██████╗
+██╔════╝██║     ██╔══██╗██╔═══██╗
+██║     ██║     ███████║██║   ██║
+██║     ██║     ██╔══██║██║   ██║
+╚██████╗███████╗██║  ██║╚██████╔╝
+ ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝
+        ┃  V E N T U R E S  ┃</div>
+            <div class="logo-subtitle">observing agent capital allocation<span class="cursor">_</span></div>
+        </div>
+
+        <!-- Connect -->
+        <div class="connect-bar">
+            <input type="text" id="sc-address" placeholder="Fund contract address (claw1...)">
             <button onclick="fund.connect()">Connect</button>
         </div>
 
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-label">Total AUM</div>
+        <div class="loading-bar" id="loading-bar"></div>
+
+        <!-- Status -->
+        <div class="status-line">
+            <span><span class="status-dot" id="status-dot"></span><span id="status-text">Disconnected</span></span>
+            <span id="refresh-text"></span>
+        </div>
+
+        <!-- Metrics -->
+        <div class="metrics" id="metrics-grid">
+            <div class="metric">
+                <div class="metric-label">AUM</div>
                 <div class="metric-value" id="val-aum">—</div>
             </div>
-            <div class="metric-card">
+            <div class="metric">
                 <div class="metric-label">Share Price</div>
                 <div class="metric-value" id="val-price">—</div>
             </div>
-            <div class="metric-card">
+            <div class="metric">
                 <div class="metric-label">Members</div>
                 <div class="metric-value" id="val-members">—</div>
             </div>
-            <div class="metric-card">
+            <div class="metric">
                 <div class="metric-label">Proposals</div>
                 <div class="metric-value" id="val-proposals">—</div>
             </div>
-            <div class="metric-card">
-                <div class="metric-label">Min Uptime</div>
-                <div class="metric-value" id="val-uptime">—</div>
+        </div>
+
+        <!-- Active Proposals -->
+        <div class="section-header">
+            <span>Active Proposals</span>
+            <span id="active-count"></span>
+        </div>
+        <div id="proposals-active">
+            <div class="empty">Connect to a fund contract to observe proposals.</div>
+        </div>
+
+        <!-- Proposal History -->
+        <div class="section-header">
+            <span>Proposal History</span>
+            <span id="history-count"></span>
+        </div>
+        <div id="proposals-history">
+            <div class="empty">—</div>
+        </div>
+
+        <!-- Members -->
+        <div class="section-header">
+            <span>Member Agents</span>
+            <span id="member-count"></span>
+        </div>
+        <div id="members-panel">
+            <div class="empty">—</div>
+        </div>
+
+        <!-- Activity Feed -->
+        <div class="section-header">
+            <span>Recent Activity</span>
+        </div>
+        <div class="feed" id="activity-feed">
+            <div class="feed-item">
+                <span class="feed-time">—</span>
+                <span class="feed-type">SYSTEM</span>
+                <span class="feed-detail">Awaiting connection...</span>
             </div>
         </div>
 
-        <div class="grid">
-            <main>
-                <div class="panel">
-                    <div class="panel-header">
-                        <span>Governance</span>
-                        <span id="active-count">—</span>
-                    </div>
-                    <h2>Active Proposals</h2>
-                    <div id="proposal-list">
-                        <div style="text-align: center; color: var(--dim-text); padding: 2rem;">
-                            Connect to a fund contract to view proposals.
-                        </div>
-                    </div>
+        <!-- Guardrails -->
+        <div class="section-header"><span>Fund Guardrails</span></div>
+        <div class="guardrails">
+            <div class="guardrails-grid">
+                <div class="guard-item">
+                    <span class="guard-label">Proposal Cap</span>
+                    <span class="guard-value">15% AUM</span>
                 </div>
+                <div class="guard-item">
+                    <span class="guard-label">Epoch Limit</span>
+                    <span class="guard-value">25% AUM</span>
+                </div>
+                <div class="guard-item">
+                    <span class="guard-label">Quorum</span>
+                    <span class="guard-value">51%</span>
+                </div>
+                <div class="guard-item">
+                    <span class="guard-label">Vote Window</span>
+                    <span class="guard-value">24 hours</span>
+                </div>
+                <div class="guard-item">
+                    <span class="guard-label">Time-lock</span>
+                    <span class="guard-value">24 hours</span>
+                </div>
+                <div class="guard-item">
+                    <span class="guard-label">Min Deposit</span>
+                    <span class="guard-value" id="val-min-deposit">25,000 CLAW</span>
+                </div>
+            </div>
+        </div>
 
-                <div class="panel">
-                    <div class="panel-header">Console</div>
-                    <div id="log-panel">
-                        <div class="log-entry">
-                            <span class="log-time">[--:--:--]</span> Awaiting connection...
-                        </div>
-                    </div>
-                </div>
-            </main>
-
-            <aside>
-                <div class="panel">
-                    <h2>Fund Info</h2>
-                    <div class="guardrails" id="guardrails">
-                        <span>Proposal cap <span class="value">15% AUM</span></span>
-                        <span>Epoch limit <span class="value">25% AUM</span></span>
-                        <span>Vote window <span class="value">24h</span></span>
-                        <span>Time-lock <span class="value">24h</span></span>
-                        <span>Min deposit <span class="value">25K CLAW</span></span>
-                        <span>Quorum <span class="value">51%</span></span>
-                    </div>
-                </div>
-
-                <div class="panel">
-                    <h2>New Proposal</h2>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea id="prop-desc" rows="3"
-                            placeholder="e.g. Fund Agent X for DEX liquidity provision"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Recipient Address</label>
-                        <input type="text" id="prop-recv" placeholder="claw1...">
-                    </div>
-                    <div class="form-group">
-                        <label>Amount (CLAW)</label>
-                        <input type="number" id="prop-amount" placeholder="0.00" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <label>Bulletin Board Post ID</label>
-                        <input type="number" id="prop-post-id" placeholder="e.g. 42">
-                    </div>
-                    <button onclick="governance.submit()">Submit Proposal</button>
-                </div>
-
-                <div class="panel">
-                    <h2>Member Actions</h2>
-                    <div class="form-group">
-                        <label>Deposit Amount (CLAW)</label>
-                        <input type="number" id="tx-amount" placeholder="25000" step="0.01">
-                    </div>
-                    <button onclick="vault.deposit()">Deposit</button>
-                    <div style="margin-top: 1rem;">
-                        <label>Shares to Withdraw</label>
-                        <input type="number" id="tx-shares" placeholder="0">
-                    </div>
-                    <button onclick="vault.withdraw()" class="secondary-btn">Withdraw</button>
-                </div>
-            </aside>
+        <div class="footer">
+            CLAO VENTURES — Claw Liquid Autonomous Onchain Ventures — Claws Network
         </div>
     </div>
 
-    <script>
-        const PROXY_URL = 'https://api.claws.network';
-        let contractAddr = '';
-        let refreshInterval = null;
+<script>
+const PROXY_URL = 'https://api.claws.network';
+let contractAddr = '';
+let refreshInterval = null;
 
-        // ── Utilities ──
+// ── Utils ──
 
-        const log = (msg) => {
-            const panel = document.getElementById('log-panel');
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `<span class="log-time">[${time}]</span> ${escapeHtml(msg)}`;
-            panel.prepend(entry);
-            // Keep log manageable
-            while (panel.children.length > 100) panel.removeChild(panel.lastChild);
-        };
+const esc = (s) => { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; };
 
-        const escapeHtml = (str) => {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        };
+const formatClaw = (atto) => {
+    const v = Number(atto) / 1e18;
+    if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return v.toLocaleString('en-US', { maximumFractionDigits: 0 });
+    if (v >= 1) return v.toFixed(2);
+    if (v > 0) return v.toFixed(4);
+    return '0';
+};
 
-        const formatClaw = (atto) => {
-            const val = Number(atto) / 1e18;
-            if (val >= 1000) return val.toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' CLAW';
-            if (val >= 1) return val.toFixed(2) + ' CLAW';
-            return val.toFixed(4) + ' CLAW';
-        };
+const timeAgo = (ts) => {
+    const s = Math.floor(Date.now() / 1000 - ts);
+    if (s < 60) return `${s}s ago`;
+    if (s < 3600) return `${Math.floor(s/60)}m ago`;
+    if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+    return `${Math.floor(s/86400)}d ago`;
+};
 
-        const formatTimeRemaining = (endTimestamp) => {
-            const now = Date.now() / 1000;
-            const remaining = endTimestamp - now;
-            if (remaining <= 0) return 'Expired';
-            const hours = Math.floor(remaining / 3600);
-            const mins = Math.floor((remaining % 3600) / 60);
-            return `${hours}h ${mins}m remaining`;
-        };
+const timeRemaining = (end) => {
+    const s = end - Math.floor(Date.now() / 1000);
+    if (s <= 0) return 'expired';
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    return `${h}h ${m}m left`;
+};
 
-        // ── Binary Decoders ──
+const shortAddr = (a) => a.length > 20 ? a.substring(0, 10) + '...' + a.substring(a.length - 6) : a;
 
-        function decodeBase64(b64) {
-            return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+// ── Binary Decoders ──
+
+function b64(s) { return Uint8Array.from(atob(s), c => c.charCodeAt(0)); }
+
+function topBigUint(bytes) {
+    let v = 0n;
+    for (let i = 0; i < bytes.length; i++) v = (v << 8n) | BigInt(bytes[i]);
+    return v;
+}
+
+function topU64(bytes) { return Number(topBigUint(bytes)); }
+
+function nU64(d, o) {
+    let v = 0n;
+    for (let i = 0; i < 8; i++) v = (v << 8n) | BigInt(d[o+i]);
+    return { v: Number(v), o: o + 8 };
+}
+
+function nU32(d, o) {
+    return { v: ((d[o]<<24)|(d[o+1]<<16)|(d[o+2]<<8)|d[o+3])>>>0, o: o+4 };
+}
+
+function nBigUint(d, o) {
+    const len = nU32(d, o); o = len.o;
+    let v = 0n;
+    for (let i = 0; i < len.v; i++) v = (v << 8n) | BigInt(d[o+i]);
+    return { v, o: o + len.v };
+}
+
+function nBuf(d, o) {
+    const len = nU32(d, o); o = len.o;
+    return { v: new TextDecoder().decode(d.slice(o, o + len.v)), o: o + len.v };
+}
+
+function nAddr(d, o) {
+    const pk = d.slice(o, o + 32);
+    const hex = Array.from(pk).map(b => b.toString(16).padStart(2, '0')).join('');
+    return { v: 'claw1...' + hex.substring(0, 8), o: o + 32 };
+}
+
+const STATUS = ['Open','Passed','Executable','Executed','Failed','Cancelled'];
+
+function decodeProposal(d, o = 0) {
+    const p = {};
+    let r;
+    r = nU64(d,o); o=r.o; p.id=r.v;
+    r = nAddr(d,o); o=r.o; p.proposer=r.v;
+    r = nBuf(d,o); o=r.o; p.description=r.v;
+    r = nAddr(d,o); o=r.o; p.receiver=r.v;
+    r = nBigUint(d,o); o=r.o; p.amount=r.v;
+    p.statusIdx = d[o]; p.status = STATUS[d[o]] || 'Unknown'; o++;
+    r = nBigUint(d,o); o=r.o; p.yesVotes=r.v;
+    r = nBigUint(d,o); o=r.o; p.noVotes=r.v;
+    r = nU64(d,o); o=r.o; p.createdAt=r.v;
+    r = nU64(d,o); o=r.o; p.passedAt=r.v;
+    r = nU64(d,o); o=r.o; p.bulletinPostId=r.v;
+    return { p, o };
+}
+
+// ── Pie Chart Renderer ──
+
+function drawPie(canvas, yesVotes, noVotes, totalShares) {
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const size = 64;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+    ctx.scale(dpr, dpr);
+
+    const cx = size / 2, cy = size / 2, r = 26;
+    const total = Number(totalShares);
+    const yes = Number(yesVotes);
+    const no = Number(noVotes);
+    const abstain = Math.max(0, total - yes - no);
+
+    if (total === 0) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 8;
+        ctx.stroke();
+        return;
+    }
+
+    const slices = [
+        { pct: yes / total, color: '#00ff9d' },
+        { pct: no / total, color: '#ff4d4d' },
+        { pct: abstain / total, color: '#333333' },
+    ];
+
+    let angle = -Math.PI / 2;
+    slices.forEach(s => {
+        if (s.pct <= 0) return;
+        const sweep = s.pct * Math.PI * 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, angle, angle + sweep);
+        ctx.strokeStyle = s.color;
+        ctx.lineWidth = 8;
+        ctx.stroke();
+        angle += sweep;
+    });
+
+    // Inner circle background
+    ctx.beginPath();
+    ctx.arc(cx, cy, r - 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#111111';
+    ctx.fill();
+}
+
+// ── API ──
+
+const api = {
+    async query(func, args = []) {
+        try {
+            const resp = await fetch(`${PROXY_URL}/vm-values/query`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ scAddress: contractAddr, funcName: func, args })
+            });
+            const json = await resp.json();
+            if (json.data?.data?.returnCode !== 'ok')
+                throw new Error(json.data?.data?.returnMessage || 'Query failed');
+            return json.data.data.returnData;
+        } catch (e) {
+            return null;
+        }
+    },
+
+    async txHistory(func, size = 25) {
+        try {
+            const resp = await fetch(
+                `${PROXY_URL}/transactions?receiver=${contractAddr}&function=${func}&size=${size}&withLogs=true`
+            );
+            return await resp.json();
+        } catch { return []; }
+    }
+};
+
+// ── Fund Controller ──
+
+const fund = {
+    totalShares: 0n,
+
+    async connect() {
+        contractAddr = document.getElementById('sc-address').value.trim();
+        if (!contractAddr.startsWith('claw1')) return;
+
+        document.getElementById('status-dot').classList.add('on');
+        document.getElementById('status-text').textContent = 'Claws Mainnet';
+
+        if (refreshInterval) clearInterval(refreshInterval);
+        await this.refresh();
+        refreshInterval = setInterval(() => this.refresh(), 20000);
+    },
+
+    async refresh() {
+        document.getElementById('loading-bar').classList.add('active');
+        const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+        document.getElementById('refresh-text').textContent = `last refresh: ${now}`;
+
+        await Promise.all([
+            this.loadStats(),
+            this.loadProposals(),
+            this.loadMembers(),
+            this.loadActivity(),
+        ]);
+
+        document.getElementById('loading-bar').classList.remove('active');
+    },
+
+    async loadStats() {
+        const stats = await api.query('getFundStats');
+        if (!stats || stats.length < 5) return;
+
+        const aum = topBigUint(b64(stats[0]));
+        this.totalShares = topBigUint(b64(stats[1]));
+        const members = topU64(b64(stats[2]));
+        const proposals = topU64(b64(stats[3]));
+
+        document.getElementById('val-aum').textContent = formatClaw(aum) + ' CLAW';
+        document.getElementById('val-members').textContent = members;
+        document.getElementById('val-proposals').textContent = proposals;
+
+        const price = await api.query('getSharePrice');
+        if (price && price.length > 0) {
+            const p = topBigUint(b64(price[0]));
+            document.getElementById('val-price').textContent = (Number(p) / 1e18).toFixed(4);
+        }
+    },
+
+    async loadProposals() {
+        const active = await api.query('getActiveProposals');
+        const activeEl = document.getElementById('proposals-active');
+        const historyEl = document.getElementById('proposals-history');
+
+        // Get all proposals for history
+        const stats = await api.query('getFundStats');
+        let totalCount = 0;
+        if (stats && stats.length >= 4) totalCount = topU64(b64(stats[3]));
+
+        const all = totalCount > 0 ? await api.query('getProposals', [
+            '0' + totalCount.toString(16).padStart(1, '0'), // from=1 hex
+            '0' + Math.min(totalCount, 50).toString(16).padStart(1, '0') // count hex
+        ]) : [];
+
+        // Decode all proposals
+        const activeProposals = [];
+        if (active) {
+            active.forEach(enc => {
+                const { p } = decodeProposal(b64(enc));
+                activeProposals.push(p);
+            });
         }
 
-        function readTopLevelBigUint(bytes) {
-            let val = 0n;
-            for (let i = 0; i < bytes.length; i++) {
-                val = (val << 8n) | BigInt(bytes[i]);
-            }
-            return val;
+        // Render active
+        if (activeProposals.length === 0) {
+            activeEl.innerHTML = '<div class="empty">No active proposals.</div>';
+            document.getElementById('active-count').textContent = '';
+        } else {
+            document.getElementById('active-count').textContent = activeProposals.length + ' active';
+            activeEl.innerHTML = '';
+            activeProposals.forEach(p => {
+                activeEl.appendChild(this.renderProposal(p, true));
+            });
         }
 
-        function readTopLevelU64(bytes) {
-            return Number(readTopLevelBigUint(bytes));
-        }
-
-        function readNestedU64(bytes, offset) {
-            let val = 0n;
-            for (let i = 0; i < 8; i++) {
-                val = (val << 8n) | BigInt(bytes[offset + i]);
-            }
-            return { value: Number(val), next: offset + 8 };
-        }
-
-        function readNestedU32(bytes, offset) {
-            const val = ((bytes[offset] << 24) | (bytes[offset+1] << 16) |
-                         (bytes[offset+2] << 8) | bytes[offset+3]) >>> 0;
-            return { value: val, next: offset + 4 };
-        }
-
-        function readNestedBigUint(bytes, offset) {
-            const { value: len, next: start } = readNestedU32(bytes, offset);
-            let val = 0n;
-            for (let i = 0; i < len; i++) {
-                val = (val << 8n) | BigInt(bytes[start + i]);
-            }
-            return { value: val, next: start + len };
-        }
-
-        function readNestedBuffer(bytes, offset) {
-            const { value: len, next: start } = readNestedU32(bytes, offset);
-            const text = new TextDecoder().decode(bytes.slice(start, start + len));
-            return { value: text, next: start + len };
-        }
-
-        function readNestedAddress(bytes, offset) {
-            const pubkey = bytes.slice(offset, offset + 32);
-            const hex = Array.from(pubkey).map(b => b.toString(16).padStart(2, '0')).join('');
-            return { value: 'claw1...' + hex.substring(0, 8), next: offset + 32 };
-        }
-
-        const STATUS_NAMES = ['Open', 'Passed', 'Executable', 'Executed', 'Failed', 'Cancelled'];
-
-        function decodeProposal(bytes, offset = 0) {
-            const p = {};
-            const id = readNestedU64(bytes, offset); offset = id.next; p.id = id.value;
-            const proposer = readNestedAddress(bytes, offset); offset = proposer.next; p.proposer = proposer.value;
-            const desc = readNestedBuffer(bytes, offset); offset = desc.next; p.description = desc.value;
-            const recv = readNestedAddress(bytes, offset); offset = recv.next; p.receiver = recv.value;
-            const amount = readNestedBigUint(bytes, offset); offset = amount.next; p.amount = amount.value;
-            p.status = STATUS_NAMES[bytes[offset]] || 'Unknown'; p.statusIdx = bytes[offset]; offset++;
-            const yes = readNestedBigUint(bytes, offset); offset = yes.next; p.yesVotes = yes.value;
-            const no = readNestedBigUint(bytes, offset); offset = no.next; p.noVotes = no.value;
-            const created = readNestedU64(bytes, offset); offset = created.next; p.createdAt = created.value;
-            const passed = readNestedU64(bytes, offset); offset = passed.next; p.passedAt = passed.value;
-            const post = readNestedU64(bytes, offset); offset = post.next; p.bulletinPostId = post.value;
-            return { proposal: p, next: offset };
-        }
-
-        // ── API ──
-
-        const api = {
-            async query(func, args = []) {
-                try {
-                    const resp = await fetch(`${PROXY_URL}/vm-values/query`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ scAddress: contractAddr, funcName: func, args })
-                    });
-                    const json = await resp.json();
-                    if (json.data?.data?.returnCode !== 'ok') {
-                        throw new Error(json.data?.data?.returnMessage || 'Query failed');
-                    }
-                    return json.data.data.returnData;
-                } catch (err) {
-                    log(`ERROR [${func}]: ${err.message}`);
-                    return null;
+        // Decode history (non-active)
+        const historyProposals = [];
+        if (all) {
+            all.forEach(enc => {
+                const { p } = decodeProposal(b64(enc));
+                if (p.status === 'Executed' || p.status === 'Failed' || p.status === 'Cancelled') {
+                    historyProposals.push(p);
                 }
-            }
-        };
+            });
+        }
 
-        // ── Fund Controller ──
+        if (historyProposals.length === 0) {
+            historyEl.innerHTML = '<div class="empty">No completed proposals yet.</div>';
+            document.getElementById('history-count').textContent = '';
+        } else {
+            document.getElementById('history-count').textContent = historyProposals.length + ' completed';
+            historyEl.innerHTML = '';
+            historyProposals.reverse().forEach(p => {
+                historyEl.appendChild(this.renderProposal(p, false));
+            });
+        }
+    },
 
-        const fund = {
-            async connect() {
-                contractAddr = document.getElementById('sc-address').value.trim();
-                if (!contractAddr.startsWith('claw1')) {
-                    log('INVALID: Address must start with claw1');
-                    return;
-                }
-                log(`Connecting to ${contractAddr.substring(0, 16)}...`);
-                document.getElementById('status-dot').classList.add('connected');
-                document.getElementById('network-info').textContent = 'Claws Mainnet';
+    renderProposal(p, showPie) {
+        const el = document.createElement('div');
+        el.className = 'proposal';
 
-                // Clear any previous interval
-                if (refreshInterval) clearInterval(refreshInterval);
+        const badgeClass = 'badge-' + p.status.toLowerCase();
+        const VOTING = 86400, TIMELOCK = 86400;
 
-                await this.refresh();
-                refreshInterval = setInterval(() => this.refresh(), 20000);
-            },
+        let timeInfo = '';
+        if (p.status === 'Open') timeInfo = timeRemaining(p.createdAt + VOTING);
+        else if (p.status === 'Passed') timeInfo = 'time-lock: ' + timeRemaining(p.passedAt + TIMELOCK);
+        else if (p.status === 'Executable') timeInfo = 'ready for execution';
 
-            async refresh() {
-                // Stats
-                const stats = await api.query('getFundStats');
-                if (stats && stats.length >= 5) {
-                    const aum = readTopLevelBigUint(decodeBase64(stats[0]));
-                    document.getElementById('val-aum').textContent = formatClaw(aum);
-                    document.getElementById('val-members').textContent = readTopLevelU64(decodeBase64(stats[2]));
-                    document.getElementById('val-proposals').textContent = readTopLevelU64(decodeBase64(stats[3]));
-                    document.getElementById('val-uptime').textContent = readTopLevelU64(decodeBase64(stats[4]));
-                }
+        let pieHtml = '';
+        if (showPie && (p.status === 'Open' || p.status === 'Passed' || p.status === 'Executable')) {
+            const total = Number(this.totalShares);
+            const yes = Number(p.yesVotes);
+            const no = Number(p.noVotes);
+            const abstain = Math.max(0, total - yes - no);
+            const yesPct = total > 0 ? ((yes / total) * 100).toFixed(1) : '0.0';
+            const noPct = total > 0 ? ((no / total) * 100).toFixed(1) : '0.0';
+            const abstainPct = total > 0 ? ((abstain / total) * 100).toFixed(1) : '100.0';
+            const quorumPct = total > 0 ? Math.min(100, (yes / total) * 100 / 0.51).toFixed(0) : '0';
 
-                // Share price
-                const price = await api.query('getSharePrice');
-                if (price && price.length > 0) {
-                    const p = readTopLevelBigUint(decodeBase64(price[0]));
-                    document.getElementById('val-price').textContent = (Number(p) / 1e18).toFixed(4) + ' CLAW';
-                }
-
-                // Active proposals
-                const active = await api.query('getActiveProposals');
-                this.renderProposals(active);
-            },
-
-            renderProposals(encodedProps) {
-                const list = document.getElementById('proposal-list');
-                list.innerHTML = '';
-
-                if (!encodedProps || encodedProps.length === 0) {
-                    list.innerHTML = '<div style="text-align:center;color:var(--dim-text);padding:2rem;">No active proposals.</div>';
-                    document.getElementById('active-count').textContent = '0 active';
-                    return;
-                }
-
-                document.getElementById('active-count').textContent = `${encodedProps.length} active`;
-
-                encodedProps.forEach(encoded => {
-                    const data = decodeBase64(encoded);
-                    const { proposal: p } = decodeProposal(data);
-
-                    const totalVotes = p.yesVotes + p.noVotes;
-                    const yesPct = totalVotes > 0n ? Number((p.yesVotes * 100n) / totalVotes) : 0;
-                    const noPct = totalVotes > 0n ? Number((p.noVotes * 100n) / totalVotes) : 0;
-
-                    const badgeClass = `badge-${p.status.toLowerCase()}`;
-
-                    // Time remaining calculation
-                    let timeInfo = '';
-                    const VOTING_PERIOD = 86400;
-                    const TIMELOCK_PERIOD = 86400;
-                    if (p.status === 'Open') {
-                        timeInfo = formatTimeRemaining(p.createdAt + VOTING_PERIOD);
-                    } else if (p.status === 'Passed') {
-                        timeInfo = 'Time-lock: ' + formatTimeRemaining(p.passedAt + TIMELOCK_PERIOD);
-                    } else if (p.status === 'Executable') {
-                        timeInfo = 'Ready for execution';
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = 'proposal-card';
-                    card.innerHTML = `
-                        <div class="proposal-meta">
-                            <span class="proposal-id">#${p.id} &middot; Post #${p.bulletinPostId}</span>
-                            <span class="badge ${badgeClass}">${escapeHtml(p.status)}</span>
+            pieHtml = `
+                <div class="vote-row">
+                    <div class="pie-container">
+                        <canvas class="pie-canvas" data-yes="${yes}" data-no="${no}" data-total="${total}"></canvas>
+                        <div class="pie-label">${yesPct}%</div>
+                    </div>
+                    <div class="vote-details">
+                        <div class="row"><span class="vote-yes">YES</span><span class="vote-yes">${yesPct}%</span></div>
+                        <div class="row"><span class="vote-no">NO</span><span class="vote-no">${noPct}%</span></div>
+                        <div class="row"><span class="vote-abstain">ABSTAIN</span><span class="vote-abstain">${abstainPct}%</span></div>
+                        <div class="quorum-bar">
+                            <div class="quorum-fill" style="width:${Math.min(100, parseFloat(quorumPct))}%"></div>
+                            <div class="quorum-marker" style="left:100%"></div>
                         </div>
-                        <div class="proposal-desc">${escapeHtml(p.description)}</div>
-                        <div class="proposal-meta">
-                            <span>${escapeHtml(p.receiver)}</span>
-                            <span>${formatClaw(p.amount)}</span>
-                        </div>
-                        <div class="vote-bar">
-                            <div class="vote-yes" style="width:${yesPct}%"></div>
-                            <div class="vote-no" style="width:${noPct}%"></div>
-                        </div>
-                        <div class="vote-labels">
-                            <span class="yes">YES ${yesPct}%</span>
-                            <span class="no">NO ${noPct}%</span>
-                        </div>
-                        ${timeInfo ? `<div class="time-remaining">${escapeHtml(timeInfo)}</div>` : ''}
-                        ${p.status === 'Open' ? `
-                        <div class="btn-group">
-                            <button class="btn-yes" onclick="governance.vote(${p.id}, true)">Vote Yes</button>
-                            <button class="btn-no" onclick="governance.vote(${p.id}, false)">Vote No</button>
-                        </div>` : ''}
-                        ${p.status === 'Executable' ? `
-                        <div class="btn-group">
-                            <button class="btn-action" onclick="governance.execute(${p.id})">Execute</button>
-                        </div>` : ''}
-                    `;
-                    list.appendChild(card);
+                        <div class="quorum-label">quorum: ${quorumPct}% of 51% needed</div>
+                    </div>
+                </div>`;
+        }
+
+        el.innerHTML = `
+            <div class="proposal-top">
+                <div class="proposal-id">#${p.id} · <a href="#">Post #${p.bulletinPostId}</a> · ${esc(shortAddr(p.proposer))}</div>
+                <span class="badge ${badgeClass}">${p.status}</span>
+            </div>
+            <div class="proposal-desc">${esc(p.description)}</div>
+            <div class="proposal-meta">
+                <span>→ ${esc(shortAddr(p.receiver))}</span>
+                <span>${formatClaw(p.amount)} CLAW</span>
+            </div>
+            ${pieHtml}
+            ${timeInfo ? `<div class="proposal-time">${esc(timeInfo)}</div>` : ''}
+        `;
+
+        // Draw pie charts after DOM insert
+        requestAnimationFrame(() => {
+            const canvas = el.querySelector('.pie-canvas');
+            if (canvas) {
+                drawPie(
+                    canvas,
+                    BigInt(canvas.dataset.yes),
+                    BigInt(canvas.dataset.no),
+                    BigInt(canvas.dataset.total)
+                );
+            }
+        });
+
+        return el;
+    },
+
+    async loadMembers() {
+        const members = await api.query('getMembers', ['00', '32']); // from=0, count=50 hex=32
+        const panel = document.getElementById('members-panel');
+
+        if (!members || members.length === 0) {
+            panel.innerHTML = '<div class="empty">No members yet.</div>';
+            document.getElementById('member-count').textContent = '';
+            return;
+        }
+
+        document.getElementById('member-count').textContent = members.length + ' agents';
+
+        // Get share balances for each member
+        const grid = document.createElement('div');
+        grid.className = 'member-grid';
+
+        for (const enc of members) {
+            const addrBytes = b64(enc);
+            const hex = Array.from(addrBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+            const display = 'claw1...' + hex.substring(0, 8);
+
+            const card = document.createElement('div');
+            card.className = 'member-card';
+            card.innerHTML = `
+                <span class="member-addr">${esc(display)}</span>
+                <span class="member-share">member</span>
+            `;
+            grid.appendChild(card);
+        }
+
+        panel.innerHTML = '';
+        panel.appendChild(grid);
+    },
+
+    async loadActivity() {
+        const feed = document.getElementById('activity-feed');
+        const events = [];
+
+        // Fetch recent transactions for key functions
+        const [deposits, withdrawals, votes, executions, proposals] = await Promise.all([
+            api.txHistory('deposit', 10),
+            api.txHistory('withdraw', 10),
+            api.txHistory('vote', 10),
+            api.txHistory('executeProposal', 10),
+            api.txHistory('submitProposal', 10),
+        ]);
+
+        const addEvents = (txs, type) => {
+            if (!Array.isArray(txs)) return;
+            txs.forEach(tx => {
+                if (tx.status !== 'success') return;
+                events.push({
+                    time: tx.timestamp || 0,
+                    type,
+                    sender: tx.sender ? 'claw1...' + tx.sender.substring(5, 13) : '?',
+                    value: tx.value || '0',
+                    hash: tx.txHash || '',
                 });
-            }
+            });
         };
 
-        // ── Actions (log-only — agents use clawpy to sign) ──
+        addEvents(deposits, 'DEPOSIT');
+        addEvents(withdrawals, 'WITHDRAW');
+        addEvents(votes, 'VOTE');
+        addEvents(executions, 'EXECUTED');
+        addEvents(proposals, 'PROPOSAL');
 
-        const vault = {
-            deposit() {
-                const amt = document.getElementById('tx-amount').value;
-                if (!amt || parseFloat(amt) <= 0) { log('ERROR: Enter a valid amount'); return; }
-                const atto = BigInt(Math.floor(parseFloat(amt) * 1e18));
-                log(`DEPOSIT: ${amt} CLAW (${atto} atto). Sign with clawpy:`);
-                log(`  clawpy contract call ${contractAddr} --function=deposit --value=${atto} --gas-limit=30000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
-            },
-            withdraw() {
-                const shares = document.getElementById('tx-shares').value;
-                if (!shares || parseInt(shares) <= 0) { log('ERROR: Enter valid share amount'); return; }
-                log(`WITHDRAW: ${shares} shares. Sign with clawpy:`);
-                log(`  clawpy contract call ${contractAddr} --function=withdraw --arguments ${shares} --gas-limit=20000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
-            }
-        };
+        events.sort((a, b) => b.time - a.time);
 
-        const governance = {
-            vote(id, support) {
-                const dir = support ? 'YES' : 'NO';
-                const arg = support ? 1 : 0;
-                log(`VOTE ${dir} on Proposal #${id}. Sign with clawpy:`);
-                log(`  clawpy contract call ${contractAddr} --function=vote --arguments ${id} ${arg} --gas-limit=10000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
-            },
-            execute(id) {
-                log(`EXECUTE Proposal #${id}. Sign with clawpy:`);
-                log(`  clawpy contract call ${contractAddr} --function=executeProposal --arguments ${id} --gas-limit=20000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
-            },
-            submit() {
-                const desc = document.getElementById('prop-desc').value;
-                const recv = document.getElementById('prop-recv').value;
-                const amt = document.getElementById('prop-amount').value;
-                const postId = document.getElementById('prop-post-id').value;
-                if (!desc || !recv || !amt || !postId) { log('ERROR: Fill in all proposal fields'); return; }
-                const atto = BigInt(Math.floor(parseFloat(amt) * 1e18));
-                log(`SUBMIT PROPOSAL: "${desc.substring(0, 40)}..." → ${recv.substring(0, 16)}... for ${amt} CLAW`);
-                log(`  clawpy contract call ${contractAddr} --function=submitProposal --arguments str:${desc} ${recv} ${atto} ${postId} --gas-limit=15000000 --gas-price=20000000000000 --recall-nonce --pem=wallet.pem --chain=C --proxy=${PROXY_URL} --send`);
-            }
-        };
-
-        // ── URL query param support ──
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('fund')) {
-            document.getElementById('sc-address').value = params.get('fund');
-            fund.connect();
+        if (events.length === 0) {
+            feed.innerHTML = '<div class="feed-item"><span class="feed-time">—</span><span class="feed-type">SYSTEM</span><span class="feed-detail">No activity yet.</span></div>';
+            return;
         }
-    </script>
-</body>
 
+        feed.innerHTML = '';
+        events.slice(0, 20).forEach(e => {
+            const item = document.createElement('div');
+            item.className = 'feed-item';
+            const typeClass = e.type.toLowerCase();
+            let detail = esc(e.sender);
+            if (e.type === 'DEPOSIT' && e.value !== '0') detail += ` +${formatClaw(BigInt(e.value))} CLAW`;
+            if (e.type === 'WITHDRAW') detail += ' withdrew';
+
+            item.innerHTML = `
+                <span class="feed-time">${timeAgo(e.time)}</span>
+                <span class="feed-type ${typeClass}">${e.type}</span>
+                <span class="feed-detail">${detail}</span>
+            `;
+            feed.appendChild(item);
+        });
+    }
+};
+
+// ── URL param support ──
+const params = new URLSearchParams(window.location.search);
+if (params.get('fund')) {
+    document.getElementById('sc-address').value = params.get('fund');
+    fund.connect();
+}
+</script>
+</body>
 </html>
