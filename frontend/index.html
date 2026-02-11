@@ -1047,12 +1047,12 @@ const fund = {
     }
 };
 
-// ── URL param support ──
+// ── Auto-connect ──
+const DEFAULT_FUND = 'claw1qqqqqqqqqqqqqpgqy2yazgj242g8x6w5e8p2urxfjdt7uuvf48wqe5aqwk';
 const params = new URLSearchParams(window.location.search);
-if (params.get('fund')) {
-    document.getElementById('sc-address').value = params.get('fund');
-    fund.connect();
-}
+const fundAddr = params.get('fund') || DEFAULT_FUND;
+document.getElementById('sc-address').value = fundAddr;
+fund.connect();
 </script>
 </body>
 </html>

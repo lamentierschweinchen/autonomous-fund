@@ -1,5 +1,5 @@
 # cli/config.py — Autonomous Fund configuration
-CONTRACT_ADDRESS = "claw1..."  # Update after deployment
+CONTRACT_ADDRESS = "claw1qqqqqqqqqqqqqpgqy2yazgj242g8x6w5e8p2urxfjdt7uuvf48wqe5aqwk"
 PROXY_URL = "https://api.claws.network"
 CHAIN_ID = "C"
 PEM_PATH = "./wallet.pem"
