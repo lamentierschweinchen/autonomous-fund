@@ -1,0 +1,634 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.81.0",
+            "commitHash": "eeb90cda1969383f56a2637cbd3037bdf598841c",
+            "commitDate": "2024-09-04",
+            "channel": "Stable",
+            "short": "rustc 1.81.0 (eeb90cda1 2024-09-04)"
+        },
+        "contractCrate": {
+            "name": "autonomous-fund",
+            "version": "0.1.0"
+        },
+        "framework": {
+            "name": "multiversx-sc",
+            "version": "0.54.6"
+        }
+    },
+    "name": "AutonomousFund",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "bond_registry_address",
+                "type": "Address"
+            },
+            {
+                "name": "uptime_address",
+                "type": "Address"
+            },
+            {
+                "name": "min_deposit",
+                "type": "BigUint"
+            },
+            {
+                "name": "min_uptime_score",
+                "type": "u64"
+            }
+        ],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "deposit",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "EGLD"
+            ],
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "withdraw",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "share_amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "submitProposal",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "description",
+                    "type": "bytes"
+                },
+                {
+                    "name": "receiver",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "bulletin_post_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "vote",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "support",
+                    "type": "bool"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "finalizeVoting",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "executeProposal",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "cancelProposal",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "expireProposal",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getProposal",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "Proposal"
+                }
+            ]
+        },
+        {
+            "name": "getProposals",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "u64"
+                },
+                {
+                    "name": "count",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<Proposal>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getActiveProposals",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<Proposal>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getFundStats",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                },
+                {
+                    "type": "BigUint"
+                },
+                {
+                    "type": "u64"
+                },
+                {
+                    "type": "u64"
+                },
+                {
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "name": "getSharePrice",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getMembers",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "u64"
+                },
+                {
+                    "name": "count",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "getMemberShares",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "agent",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getEpochSpent",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "epoch",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getVoteRecords",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "variadic<VoteRecord>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "hasAgentVoted",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64"
+                },
+                {
+                    "name": "agent",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "getContractConfig",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                },
+                {
+                    "type": "u64"
+                },
+                {
+                    "type": "u64"
+                },
+                {
+                    "type": "u64"
+                }
+            ]
+        }
+    ],
+    "events": [
+        {
+            "identifier": "deposit",
+            "inputs": [
+                {
+                    "name": "agent",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                },
+                {
+                    "name": "shares",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "identifier": "withdraw",
+            "inputs": [
+                {
+                    "name": "agent",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint",
+                    "indexed": true
+                },
+                {
+                    "name": "shares",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "identifier": "proposalCreated",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "proposer",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "bulletin_post_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "timestamp",
+                    "type": "u64"
+                }
+            ]
+        },
+        {
+            "identifier": "vote",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "voter",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "support",
+                    "type": "bool",
+                    "indexed": true
+                },
+                {
+                    "name": "weight",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "identifier": "proposalPassed",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "passed_at",
+                    "type": "u64",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "proposalFailed",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "proposalExecuted",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "receiver",
+                    "type": "Address",
+                    "indexed": true
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "identifier": "proposalCancelled",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "proposer",
+                    "type": "Address",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "rageQuit",
+            "inputs": [
+                {
+                    "name": "proposal_id",
+                    "type": "u64",
+                    "indexed": true
+                },
+                {
+                    "name": "agent",
+                    "type": "Address",
+                    "indexed": true
+                }
+            ]
+        }
+    ],
+    "esdtAttributes": [],
+    "hasCallback": false,
+    "types": {
+        "Proposal": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "u64"
+                },
+                {
+                    "name": "proposer",
+                    "type": "Address"
+                },
+                {
+                    "name": "description",
+                    "type": "bytes"
+                },
+                {
+                    "name": "receiver",
+                    "type": "Address"
+                },
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "status",
+                    "type": "ProposalStatus"
+                },
+                {
+                    "name": "yes_votes",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "no_votes",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "created_at",
+                    "type": "u64"
+                },
+                {
+                    "docs": [
+                        "Block timestamp when voting ended and time-lock started (0 if still Open)"
+                    ],
+                    "name": "passed_at",
+                    "type": "u64"
+                },
+                {
+                    "docs": [
+                        "Bulletin Board post ID linking to the discussion thread"
+                    ],
+                    "name": "bulletin_post_id",
+                    "type": "u64"
+                }
+            ]
+        },
+        "ProposalStatus": {
+            "type": "enum",
+            "variants": [
+                {
+                    "docs": [
+                        "Voting is open. Agents can vote yes/no."
+                    ],
+                    "name": "Open",
+                    "discriminant": 0
+                },
+                {
+                    "docs": [
+                        "Quorum reached, yes > no. Time-lock period active."
+                    ],
+                    "name": "Passed",
+                    "discriminant": 1
+                },
+                {
+                    "docs": [
+                        "Time-lock elapsed. Any member can trigger execution."
+                    ],
+                    "name": "Executable",
+                    "discriminant": 2
+                },
+                {
+                    "docs": [
+                        "Funds sent. Terminal state."
+                    ],
+                    "name": "Executed",
+                    "discriminant": 3
+                },
+                {
+                    "docs": [
+                        "Voting window expired without quorum, or no >= yes,",
+                        "or rage-quit during time-lock dropped votes below threshold."
+                    ],
+                    "name": "Failed",
+                    "discriminant": 4
+                },
+                {
+                    "docs": [
+                        "Proposer cancelled before execution."
+                    ],
+                    "name": "Cancelled",
+                    "discriminant": 5
+                }
+            ]
+        },
+        "VoteDirection": {
+            "type": "enum",
+            "variants": [
+                {
+                    "name": "Yes",
+                    "discriminant": 0
+                },
+                {
+                    "name": "No",
+                    "discriminant": 1
+                }
+            ]
+        },
+        "VoteRecord": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "voter",
+                    "type": "Address"
+                },
+                {
+                    "name": "direction",
+                    "type": "VoteDirection"
+                },
+                {
+                    "name": "weight",
+                    "type": "BigUint"
+                }
+            ]
+        }
+    }
+}
